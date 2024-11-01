@@ -15,10 +15,7 @@
         android:theme="@style/Theme.ITTelekom"
         tools:targetApi="31">
         <activity
-            android:name=".DashboardActivity">
-        </activity>
-        <activity
-            android:name=".LoginActivity"
+            android:name=".screens.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.ITTelekom">
             <intent-filter>
@@ -26,6 +23,9 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".screens.DashboardActivity">
         </activity>
     </application>
 

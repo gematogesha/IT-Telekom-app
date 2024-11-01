@@ -1,4 +1,4 @@
-package com.example.it_telekom_app
+package com.example.it_telekom_app.screens
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
+import com.example.it_telekom_app.utils.TokenManager
+import com.example.it_telekom_app.network.RetrofitInstance
 import com.example.it_telekom_app.ui.theme.LoginActivityTheme
 import com.example.it_telekom_app.ui.theme.Typography
 import kotlinx.coroutines.CoroutineScope
@@ -58,13 +60,14 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (isUserLoggedIn(this)) {
-            Log.d("LoginActivity", "User is already logged in")
+        // Проверяем наличие токена через TokenManager
+        val token = TokenManager.getInstance(this).getToken()
+        if (token != null) {
+            Log.d("LoginActivity", "User is logged in, navigating to Dashboard")
             startActivity(Intent(this, DashboardActivity::class.java))
             finish()
             return
         }
-
         setContent {
             LoginActivityTheme {
                 window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
@@ -88,8 +91,7 @@ fun getEncryptedSharedPreferences(context: Context): SharedPreferences {
 }
 
 fun saveToken(context: Context, token: String) {
-    val sharedPreferences = getEncryptedSharedPreferences(context)
-    sharedPreferences.edit().putString("user_token", token).apply()
+    TokenManager.getInstance(context).saveToken(token)
 }
 
 fun isUserLoggedIn(context: Context): Boolean {
@@ -197,6 +199,7 @@ fun LoginScreen() {
                         CoroutineScope(Dispatchers.IO).launch {
                             try {
                                 val response = RetrofitInstance.api.login(login, password)
+                                Log.d("Responce", response.body().toString())
                                 if (response.isSuccessful && response.body() != null) {
                                     val token = response.body()!!.string().trim()
                                     saveToken(context, token)
@@ -215,7 +218,7 @@ fun LoginScreen() {
                             } catch (e: Exception) {
                                 withContext(Dispatchers.Main) {
                                     isLoading = false
-                                    Log.e("LoginError", "Ошибка сети: ${e.message}", e)
+                                    Log.e("LoginError", "Error: ${e.message}", e)
                                     snackbarHostState.showSnackbar("Ошибка сети: ${e.message}")
                                 }
                             }
@@ -228,7 +231,7 @@ fun LoginScreen() {
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = MaterialTheme.colorScheme.secondaryContainer,
                             strokeWidth = 2.dp,
                             modifier = Modifier.size(24.dp)
                         )

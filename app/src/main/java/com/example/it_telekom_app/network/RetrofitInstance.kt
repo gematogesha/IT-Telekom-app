@@ -1,13 +1,11 @@
-package com.example.it_telekom_app
+package com.example.it_telekom_app.network
 
-import com.google.gson.GsonBuilder
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
     private const val BASE_URL = "https://api.it-net.org/api/"
 
-    val gson = GsonBuilder().setLenient().create()
 
     val api: ApiService by lazy {
         Retrofit.Builder()

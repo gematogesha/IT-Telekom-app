@@ -12,7 +12,9 @@ import androidx.compose.ui.platform.LocalContext
 
 private val LightColorScheme = lightColorScheme(
     primary = Primary,
+    onPrimary = OnPrimary,
     secondary = Secondary,
+    onSecondary = OnSecondary,
     surface = Surface,
     onSurface = OnSurface,
     surfaceContainer = Container,
@@ -23,7 +25,9 @@ private val LightColorScheme = lightColorScheme(
 
 private val DarkColorScheme = darkColorScheme(
     primary = DarkPrimary,
+    onPrimary = DarkOnPrimary,
     secondary = DarkSecondary,
+    onSecondary = DarkOnSecondary,
     surface = DarkSurface,
     onSurface = DarkOnSurface,
     surfaceContainer = DarkContainer,
@@ -60,7 +64,6 @@ private val LoginDarkColorScheme = darkColorScheme(
 @Composable
 fun ITTelekomTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -84,7 +87,6 @@ fun ITTelekomTheme(
 @Composable
 fun LoginActivityTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {

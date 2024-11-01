@@ -1,4 +1,4 @@
-package com.example.it_telekom_app
+package com.example.it_telekom_app.screens
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -36,7 +36,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.it_telekom_app.screens.HomeScreen
+import com.example.it_telekom_app.utils.TokenManager
 import com.example.it_telekom_app.ui.theme.ITTelekomTheme
 
 
@@ -131,11 +131,6 @@ fun BottomNavigationBar(navController: NavHostController) {
 
 @Composable
 fun PaymentScreen() {
-    Text("Profile Screen", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
-}
-
-@Composable
-fun ProfileScreen() {
     Text("Profile Screen", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
 }
 

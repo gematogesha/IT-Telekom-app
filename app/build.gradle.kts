@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.accompanist.swiperefresh)
 
     // Зависимости для тестирования
     testImplementation(libs.junit)

@@ -1,5 +1,6 @@
 [versions]
 accompanistNavigationAnimationVersion = "<latest-version>"
+accompanistSwiperefreshVersion = "<latest_version>"
 agp = "8.6.1"
 converterGson = "2.9.0"
 gson = "2.10.1"
@@ -22,6 +23,7 @@ ui = "1.7.5"
 securityCryptoKtx = "1.0.0"
 
 [libraries]
+accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanistSwiperefreshVersion" }
 androidx-compose-material3-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtendedVersion" }

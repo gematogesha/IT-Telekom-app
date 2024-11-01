@@ -1,4 +1,4 @@
-package com.example.it_telekom_app
+package com.example.it_telekom_app.utils
 
 import android.content.Context
 import android.content.SharedPreferences
