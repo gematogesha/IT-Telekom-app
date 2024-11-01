@@ -19,8 +19,10 @@ fun HomeScreen(token: String?) {
     var accountInfo by remember { mutableStateOf<AccountInfo?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    // Функция для загрузки информации об аккаунте
+    fun loadAccountInfo() {
         if (token != null) {
             scope.launch {
                 try {
@@ -35,32 +37,26 @@ fun HomeScreen(token: String?) {
                     Log.e("HomeScreen", "Ошибка сети: ${e.message}", e)
                 } finally {
                     isLoading = false
+                    isRefreshing = false
                 }
             }
         } else {
             errorMessage = "Токен не найден, пожалуйста, войдите снова."
             isLoading = false
+            isRefreshing = false
         }
     }
 
-    var isRefreshing by remember { mutableStateOf(false) }
+    // Загрузка информации об аккаунте при первом запуске
+    LaunchedEffect(Unit) {
+        loadAccountInfo()
+    }
 
-    // Use SwipeRefresh from Accompanist
     SwipeRefresh(
         state = rememberSwipeRefreshState(isRefreshing),
         onRefresh = {
-            // Set refreshing state to true
             isRefreshing = true
-
-            // Perform refresh logic here, e.g., make network call
-            // Имитация обновления данных
-            // В реальном приложении замените этот вызов на ваш API-запрос
-            LaunchedEffect(Unit) {
-                // Задержка для имитации обновления
-                kotlinx.coroutines.delay(2000)
-                // После получения данных устанавливаем isRefreshing обратно в false
-                isRefreshing = false
-            }
+            loadAccountInfo()
         },
     ) {
         Surface(
@@ -74,7 +70,7 @@ fun HomeScreen(token: String?) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                if (isLoading) {
+                if (isLoading && !isRefreshing) {
                     CircularProgressIndicator(
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(48.dp)
