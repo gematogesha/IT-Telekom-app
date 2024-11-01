@@ -49,5 +49,12 @@ val Typography = Typography(
         fontSize = 24.sp,
         lineHeight = 28.sp,
         letterSpacing = 0.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = FiraSans,
+        fontWeight = FontWeight.W500,
+        fontSize = 13.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.sp
     )
 )

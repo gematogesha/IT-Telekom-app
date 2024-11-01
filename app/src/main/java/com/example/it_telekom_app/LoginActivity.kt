@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,10 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.security.crypto.EncryptedSharedPreferences
@@ -99,7 +100,6 @@ fun isUserLoggedIn(context: Context): Boolean {
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
 fun LoginScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -145,7 +145,7 @@ fun LoginScreen() {
                     label = { Text("Логин") },
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_user),
+                            imageVector = Icons.Outlined.Person,
                             contentDescription = "User Icon",
                             tint = if (login.isNotEmpty())
                                 MaterialTheme.colorScheme.primaryContainer
@@ -175,7 +175,7 @@ fun LoginScreen() {
                     ),
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_lock),
+                            imageVector = Icons.Outlined.Lock,
                             contentDescription = "Lock Icon",
                             tint = if (login.isNotEmpty())
                                 MaterialTheme.colorScheme.primaryContainer

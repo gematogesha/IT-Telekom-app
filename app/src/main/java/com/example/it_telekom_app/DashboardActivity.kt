@@ -5,7 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Leaderboard
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -13,10 +23,13 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -41,14 +54,13 @@ class DashboardActivity : ComponentActivity() {
 }
 
 @Preview
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen() {
     val navController = rememberNavController()
     val token = TokenManager.getInstance(LocalContext.current).getToken()
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController = navController) }
+        bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -58,11 +70,17 @@ fun DashboardScreen() {
             composable("home") {
                 HomeScreen(token)
             }
+            composable("payment") {
+                PaymentScreen()
+            }
+            composable("chat") {
+               ChatScreen()
+            }
+            composable("statistics") {
+                StatisticsScreen()
+            }
             composable("profile") {
                 ProfileScreen()
-            }
-            composable("settings") {
-                SettingsScreen()
             }
         }
     }
@@ -70,26 +88,50 @@ fun DashboardScreen() {
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController) {
-    NavigationBar {
-        NavigationBarItem(
-            icon = { Icon(painterResource(id = R.drawable.ic_home), contentDescription = "Home") },
-            label = { Text("Home") },
-            selected = navController.currentDestination?.route == "home",
-            onClick = { navController.navigate("home") }
-        )
-        NavigationBarItem(
-            icon = { Icon(painterResource(id = R.drawable.ic_home), contentDescription = "Profile") },
-            label = { Text("Profile") },
-            selected = navController.currentDestination?.route == "profile",
-            onClick = { navController.navigate("profile") }
-        )
-        NavigationBarItem(
-            icon = { Icon(painterResource(id = R.drawable.ic_home), contentDescription = "Settings") },
-            label = { Text("Settings") },
-            selected = navController.currentDestination?.route == "settings",
-            onClick = { navController.navigate("settings") }
-        )
+    var selectedItem by remember { mutableIntStateOf(0) }
+
+    val items = listOf("Главная", "Оплата", "Чат", "Статистика", "Профиль")
+    val labels = listOf("home", "payment", "chat", "statistics", "profile")
+    val selectedIcons = listOf(Icons.Filled.Home, Icons.Filled.AccountBalanceWallet, Icons.Filled.ChatBubble, Icons.Filled.Leaderboard, Icons.Filled.Person)
+    val unselectedIcons = listOf(Icons.Outlined.Home, Icons.Outlined.AccountBalanceWallet, Icons.Outlined.ChatBubbleOutline, Icons.Outlined.Leaderboard, Icons.Outlined.Person)
+
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        items.forEachIndexed { index, item ->
+            NavigationBarItem(
+                icon = {
+                    Icon(
+                        if (selectedItem == index) selectedIcons[index] else unselectedIcons[index],
+                        contentDescription = labels[index]
+                    )
+                },
+                label = {
+                    Text(
+                        text = item,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                },
+                selected = selectedItem == index,
+
+                onClick = {
+                    selectedItem = index
+                    navController.navigate(labels[index]) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        restoreState = true
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
     }
+}
+
+@Composable
+fun PaymentScreen() {
+    Text("Profile Screen", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
 }
 
 @Composable
@@ -98,6 +140,11 @@ fun ProfileScreen() {
 }
 
 @Composable
-fun SettingsScreen() {
-    Text("Settings Screen", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
+fun ChatScreen() {
+    Text("Chat Screen", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
+}
+
+@Composable
+fun StatisticsScreen() {
+    Text("Statistics Screen", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
 }
