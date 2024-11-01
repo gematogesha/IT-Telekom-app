@@ -21,7 +21,6 @@ fun HomeScreen(token: String?) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
 
-    // Функция для загрузки информации об аккаунте
     fun loadAccountInfo() {
         if (token != null) {
             scope.launch {
