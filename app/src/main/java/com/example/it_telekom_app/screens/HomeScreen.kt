@@ -1,110 +1,137 @@
 package com.example.it_telekom_app.screens
 
-import android.util.Log
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.it_telekom_app.models.AccountInfo
 import com.example.it_telekom_app.network.RetrofitInstance
-import com.google.accompanist.swiperefresh.*
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(token: String?) {
-    val scope = rememberCoroutineScope()
     var accountInfo by remember { mutableStateOf<AccountInfo?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var isRefreshing by remember { mutableStateOf(false) }
 
-    fun loadAccountInfo() {
-        if (token != null) {
-            scope.launch {
-                try {
-                    val response = RetrofitInstance.api.getAccountInfo("Bearer $token")
-                    if (response.isSuccessful && response.body() != null) {
-                        accountInfo = response.body()
-                    } else {
-                        errorMessage = "Ошибка получения данных аккаунта: ${response.message()}"
-                    }
-                } catch (e: Exception) {
-                    errorMessage = "Ошибка сети: ${e.message}"
-                    Log.e("HomeScreen", "Ошибка сети: ${e.message}", e)
-                } finally {
-                    isLoading = false
-                    isRefreshing = false
-                }
+    var isRefreshing by remember { mutableStateOf(false) }
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    val scope = rememberCoroutineScope()
+
+    // Функция для обновления данных
+    val onRefresh: () -> Unit = {
+        scope.launch {
+            isRefreshing = true
+            loadAccountInfo(token) { response, error ->
+                accountInfo = response
+                errorMessage = error
+                isLoading = false
+                isRefreshing = false
             }
-        } else {
-            errorMessage = "Токен не найден, пожалуйста, войдите снова."
-            isLoading = false
-            isRefreshing = false
         }
     }
 
-    // Загрузка информации об аккаунте при первом запуске
+    // Первоначальная загрузка данных
     LaunchedEffect(Unit) {
-        loadAccountInfo()
+        onRefresh()
     }
 
-    SwipeRefresh(
-        state = rememberSwipeRefreshState(isRefreshing),
-        onRefresh = {
-            isRefreshing = true
-            loadAccountInfo()
-        },
-    ) {
+    Scaffold(
+        modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection),
+    ) { innerPadding ->
         Surface(
             color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            Box(
+                modifier = Modifier.fillMaxSize()
             ) {
-                if (isLoading && !isRefreshing) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(48.dp)
-                    )
-                } else {
+                // LazyColumn для контента
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     if (accountInfo != null) {
-                        Text(
-                            text = "Имя: ${accountInfo!!.name}",
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                        Text(
-                            text = "Логин: ${accountInfo!!.login}",
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                        Text(
-                            text = "Баланс: ${accountInfo!!.balance}",
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                        Text(
-                            text = "Тариф: ${accountInfo!!.tariff_caption}",
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    } else {
-                        Text(
-                            text = errorMessage ?: "Ошибка загрузки данных",
-                            fontSize = 18.sp,
-                            modifier = Modifier.padding(8.dp)
-                        )
+                        items(listOf(accountInfo!!)) { info ->
+                            Text(text = "Имя: ${info.name}")
+                            Text(text = "Логин: ${info.login}")
+                            Text(text = "Баланс: ${info.balance}")
+                            Text(text = "Тариф: ${info.tariff_caption}")
+                        }
+                    } else if (errorMessage != null) {
+                        item {
+                            Text(text = errorMessage ?: "Ошибка загрузки данных")
+                        }
                     }
                 }
+
+                // Индикатор загрузки
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                if (pullToRefreshState.isRefreshing) {
+                    LaunchedEffect(Unit) {
+                        onRefresh()
+                    }
+                }
+
+                // PullToRefreshContainer для отображения анимации pull-to-refresh
+                PullToRefreshContainer(
+                    state = pullToRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                )
             }
         }
+    }
+}
+// Функция для загрузки данных аккаунта
+private suspend fun loadAccountInfo(
+    token: String?,
+    onResult: (AccountInfo?, String?) -> Unit
+) {
+    if (token != null) {
+        try {
+            val response = RetrofitInstance.api.getAccountInfo("Bearer $token")
+            if (response.isSuccessful && response.body() != null) {
+                onResult(response.body(), null)
+            } else {
+                onResult(null, "Ошибка получения данных аккаунта: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            onResult(null, "Ошибка сети: ${e.message}")
+        }
+    } else {
+        onResult(null, "Токен не найден, пожалуйста, войдите снова.")
     }
 }

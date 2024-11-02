@@ -46,7 +46,8 @@ private val LoginLightColorScheme = lightColorScheme(
     primaryContainer = LoginOnSurface,
     secondaryContainer = LoginOnSurface70,
     inverseSurface = InverseSurface,
-    inverseOnSurface = InverseOnSurface
+    inverseOnSurface = InverseOnSurface,
+    outline = Outline
 
 )
 
@@ -58,7 +59,8 @@ private val LoginDarkColorScheme = darkColorScheme(
     primaryContainer = DarkLoginOnSurface,
     secondaryContainer = DarkLoginOnSurface70,
     inverseSurface = DarkInverseSurface,
-    inverseOnSurface = DarkInverseOnSurface
+    inverseOnSurface = DarkInverseOnSurface,
+    outline = Outline
 )
 
 @Composable

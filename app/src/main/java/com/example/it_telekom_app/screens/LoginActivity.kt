@@ -44,14 +44,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
-import com.example.it_telekom_app.utils.TokenManager
 import com.example.it_telekom_app.network.RetrofitInstance
 import com.example.it_telekom_app.ui.theme.LoginActivityTheme
 import com.example.it_telekom_app.ui.theme.Typography
+import com.example.it_telekom_app.utils.TokenManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -62,12 +65,27 @@ class LoginActivity : ComponentActivity() {
 
         // Проверяем наличие токена через TokenManager
         val token = TokenManager.getInstance(this).getToken()
+        var showSplashScreen = true
         if (token != null) {
             Log.d("LoginActivity", "User is logged in, navigating to Dashboard")
             startActivity(Intent(this, DashboardActivity::class.java))
             finish()
             return
         }
+
+
+
+        lifecycleScope.launch {
+            delay(1000) //Simulates checking if the user is logged in
+            showSplashScreen = false
+        }
+
+        installSplashScreen().apply {
+            this.setKeepOnScreenCondition {
+                showSplashScreen
+            }
+        }
+
         setContent {
             LoginActivityTheme {
                 window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
@@ -131,10 +149,11 @@ fun LoginScreen() {
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                OutlinedTextField(
+               OutlinedTextField(
                     value = login,
                     textStyle = Typography.bodyMedium,
                     onValueChange = { login = it },
+                    label = { Text("Логин") },
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         unfocusedTextColor = MaterialTheme.colorScheme.secondaryContainer,
                         focusedTextColor = MaterialTheme.colorScheme.primaryContainer,
@@ -144,7 +163,6 @@ fun LoginScreen() {
                         focusedLabelColor = MaterialTheme.colorScheme.primaryContainer,
                         focusedLeadingIconColor = MaterialTheme.colorScheme.primaryContainer
                     ),
-                    label = { Text("Логин") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Outlined.Person,

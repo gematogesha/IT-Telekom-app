@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.example.it_telekom_app"
-    compileSdk = 34
+    compileSdkVersion(rootProject.extra["compileSdkVersion"] as Int)
 
     defaultConfig {
         applicationId = "com.example.it_telekom_app"
         minSdk = 29
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -48,6 +48,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    buildToolsVersion = "34.0.0"
 }
 
 dependencies {
@@ -60,22 +61,13 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.kotlinx.coroutines.android)
-
-    // Retrofit
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-
-    // Gson
     implementation(libs.gson)
 
-    // Kotlin Coroutines
-    implementation(libs.kotlinx.coroutines.android)
-
-    implementation(libs.androidx.material3.vversion)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
-    implementation(libs.accompanist.swiperefresh)
+    implementation(libs.androidx.storage)
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Зависимости для тестирования
     testImplementation(libs.junit)

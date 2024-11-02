@@ -2,7 +2,6 @@
 <resources>
 
     <style name="Theme.ITTelekom" parent="android:Theme.Material.Light.NoActionBar">
-
     </style>
 
 </resources>

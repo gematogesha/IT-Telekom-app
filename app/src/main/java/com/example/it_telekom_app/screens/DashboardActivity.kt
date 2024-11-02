@@ -74,7 +74,7 @@ fun DashboardScreen() {
                 PaymentScreen()
             }
             composable("chat") {
-               ChatScreen()
+                ChatScreen()
             }
             composable("statistics") {
                 StatisticsScreen()

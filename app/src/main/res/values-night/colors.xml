@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="primaryColor">#00513c</color>
+    <color name="onPrimaryColor">#a6f2d2</color>
+
+    <color name="primaryContainer">#00513c</color>
+    <color name="onPrimaryContainer">#a6f2d2</color>
+
+    <color name="secondaryColor">#703715</color>
+    <color name="onSecondaryColor">#ffdbca</color>
+
+    <color name="secondaryContainer">#703715</color>
+    <color name="onSecondaryContainer">#ffdbca</color>
+
+    <color name="surface">#0e1415</color>
+    <color name="onSurface">#dee3e5</color>
+
+    <color name="inverseSurface">#dee3e5</color>
+    <color name="inverseOnSurface">#2b3133</color>
+
+    <color name="container">#1b2122</color>
+    <color name="containerLow">#801B2122</color>
+    <color name="containerHigh">#B31B2122</color>
+    <color name="containerHighest">#303637</color>
+
+    <color name="outline">#89938d</color>
+
+    <color name="loginSurface">#0e1415</color>
+    <color name="loginOnSurface">#dee3e5</color>
+    <color name="loginOnSurface_70">#B3DEE3E5</color>
+    <color name="loginPrimaryColor">#00513c</color>
+    <color name="loginOnPrimaryColor">#a6f2d2</color>
+
+</resources>
