@@ -1,137 +1,174 @@
 package com.example.it_telekom_app.screens
 
+import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.it_telekom_app.components.PullRefresh
 import com.example.it_telekom_app.models.AccountInfo
-import com.example.it_telekom_app.network.RetrofitInstance
-import kotlinx.coroutines.launch
+import com.example.it_telekom_app.viewmodels.HomeViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(token: String?) {
-    var accountInfo by remember { mutableStateOf<AccountInfo?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val homeViewModel: HomeViewModel = viewModel()
+    val accountInfo = homeViewModel.accountInfo
+    val isLoading = homeViewModel.isLoading
+    val errorMessage = homeViewModel.errorMessage
+    val isRefreshing = homeViewModel.isRefreshing
 
-    var isRefreshing by remember { mutableStateOf(false) }
-    val pullToRefreshState = rememberPullToRefreshState()
-
-    val scope = rememberCoroutineScope()
-
-    // Функция для обновления данных
-    val onRefresh: () -> Unit = {
-        scope.launch {
-            isRefreshing = true
-            loadAccountInfo(token) { response, error ->
-                accountInfo = response
-                errorMessage = error
-                isLoading = false
-                isRefreshing = false
-            }
+    LaunchedEffect(token) {
+        if (accountInfo == null && !isLoading && !isRefreshing) {
+            homeViewModel.loadAccountInfo(token)
         }
-    }
-
-    // Первоначальная загрузка данных
-    LaunchedEffect(Unit) {
-        onRefresh()
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(pullToRefreshState.nestedScrollConnection),
-    ) { innerPadding ->
-        Surface(
-            color = MaterialTheme.colorScheme.surface,
+        content = {
+            PullRefresh(
+                refreshing = isRefreshing,
+                enabled = true,
+                onRefresh = { homeViewModel.refreshAccountInfo(token) },
+                modifier = Modifier.fillMaxSize(),
+                indicatorPadding = PaddingValues(16.dp)
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(all = 16.dp)
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            if (accountInfo != null) {
+                                items(listOf(accountInfo)) { info ->
+                                    CardTop(accountInfo)
+                                    Text(text = "Имя: ${info.name}")
+                                    Text(text = "Логин: ${info.login}")
+                                    Text(text = "Баланс: ${info.balance}")
+                                    Text(text = "Тариф: ${info.tariff_caption}")
+                                }
+                            } else if (errorMessage != null) {
+                                item {
+                                    Text(text = errorMessage ?: "Ошибка загрузки данных")
+                                }
+                            }
+                        }
+
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.Center),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun CardTop(info: AccountInfo) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+            .wrapContentHeight(),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(horizontal = 20.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .size(56.dp) // Фиксированный размер для создания круга
+                    .background(MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                // LazyColumn для контента
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    if (accountInfo != null) {
-                        items(listOf(accountInfo!!)) { info ->
-                            Text(text = "Имя: ${info.name}")
-                            Text(text = "Логин: ${info.login}")
-                            Text(text = "Баланс: ${info.balance}")
-                            Text(text = "Тариф: ${info.tariff_caption}")
-                        }
-                    } else if (errorMessage != null) {
-                        item {
-                            Text(text = errorMessage ?: "Ошибка загрузки данных")
-                        }
-                    }
-                }
+                Icon(
+                    imageVector = Icons.Rounded.Person,
+                    contentDescription = "User Icon",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(32.dp) // Размер иконки
+                )
+            }
 
-                // Индикатор загрузки
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Абонент №1",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-                if (pullToRefreshState.isRefreshing) {
-                    LaunchedEffect(Unit) {
-                        onRefresh()
-                    }
-                }
+                Text(
+                    text = "№" + info.num_dog, // Используйте вашу строку для номера договора
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
 
-                // PullToRefreshContainer для отображения анимации pull-to-refresh
-                PullToRefreshContainer(
-                    state = pullToRefreshState,
-                    modifier = Modifier.align(Alignment.TopCenter),
+            // Правая иконка
+            Box(
+                modifier = Modifier
+                    .size(40.dp) // Фиксированный размер для создания круга
+                    .background(MaterialTheme.colorScheme.outlineVariant, shape = CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Lock,
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    contentDescription = "User Locked Icon",
+                    modifier = Modifier.size(20.dp) // Размер иконки
                 )
             }
         }
-    }
-}
-// Функция для загрузки данных аккаунта
-private suspend fun loadAccountInfo(
-    token: String?,
-    onResult: (AccountInfo?, String?) -> Unit
-) {
-    if (token != null) {
-        try {
-            val response = RetrofitInstance.api.getAccountInfo("Bearer $token")
-            if (response.isSuccessful && response.body() != null) {
-                onResult(response.body(), null)
-            } else {
-                onResult(null, "Ошибка получения данных аккаунта: ${response.message()}")
-            }
-        } catch (e: Exception) {
-            onResult(null, "Ошибка сети: ${e.message}")
-        }
-    } else {
-        onResult(null, "Токен не найден, пожалуйста, войдите снова.")
     }
 }

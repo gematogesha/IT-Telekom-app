@@ -25,12 +25,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
 import com.example.it_telekom_app.network.RetrofitInstance
 import com.example.it_telekom_app.ui.theme.LoginActivityTheme
 import com.example.it_telekom_app.ui.theme.Typography
@@ -63,7 +63,6 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Проверяем наличие токена через TokenManager
         val token = TokenManager.getInstance(this).getToken()
         var showSplashScreen = true
         if (token != null) {
@@ -72,8 +71,6 @@ class LoginActivity : ComponentActivity() {
             finish()
             return
         }
-
-
 
         lifecycleScope.launch {
             delay(1000) //Simulates checking if the user is logged in
@@ -97,12 +94,14 @@ class LoginActivity : ComponentActivity() {
 }
 
 fun getEncryptedSharedPreferences(context: Context): SharedPreferences {
-    val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+    val masterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
 
     return EncryptedSharedPreferences.create(
-        "encrypted_user_prefs",
-        masterKeyAlias,
         context,
+        "encrypted_user_prefs",
+        masterKey,
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
@@ -112,14 +111,8 @@ fun saveToken(context: Context, token: String) {
     TokenManager.getInstance(context).saveToken(token)
 }
 
-fun isUserLoggedIn(context: Context): Boolean {
-    val sharedPreferences = getEncryptedSharedPreferences(context)
-    val token = sharedPreferences.getString("user_token", null)
-    return token != null
-}
-
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun LoginScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -149,28 +142,15 @@ fun LoginScreen() {
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-               OutlinedTextField(
+                OutlinedTextField(
                     value = login,
                     textStyle = Typography.bodyMedium,
                     onValueChange = { login = it },
                     label = { Text("Логин") },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        unfocusedTextColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedTextColor = MaterialTheme.colorScheme.primaryContainer,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedBorderColor = MaterialTheme.colorScheme.primaryContainer,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedLabelColor = MaterialTheme.colorScheme.primaryContainer,
-                        focusedLeadingIconColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Outlined.Person,
                             contentDescription = "User Icon",
-                            tint = if (login.isNotEmpty())
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.secondaryContainer
                         )
                     },
                     modifier = Modifier
@@ -184,23 +164,10 @@ fun LoginScreen() {
                     textStyle = Typography.bodyMedium,
                     onValueChange = { password = it },
                     label = { Text("Пароль") },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        unfocusedTextColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedTextColor = MaterialTheme.colorScheme.primaryContainer,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedBorderColor = MaterialTheme.colorScheme.primaryContainer,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.secondaryContainer,
-                        focusedLabelColor = MaterialTheme.colorScheme.primaryContainer,
-                        focusedLeadingIconColor = MaterialTheme.colorScheme.primaryContainer
-                    ),
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Outlined.Lock,
                             contentDescription = "Lock Icon",
-                            tint = if (login.isNotEmpty())
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.secondaryContainer
                         )
                     },
                     visualTransformation = PasswordVisualTransformation(),
@@ -249,7 +216,7 @@ fun LoginScreen() {
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            color = MaterialTheme.colorScheme.primary,
                             strokeWidth = 2.dp,
                             modifier = Modifier.size(24.dp)
                         )

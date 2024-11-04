@@ -21,4 +21,9 @@ interface ApiService {
     suspend fun getAccountInfo(
         @Header("Authorization") token: String
     ): Response<AccountInfo>
+
+    @POST("remove_token")
+    suspend fun logout(
+        @Header("Authorization") token: String
+    ): Response<ResponseBody>
 }

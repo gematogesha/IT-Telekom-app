@@ -15,12 +15,20 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = OnPrimary,
     secondary = Secondary,
     onSecondary = OnSecondary,
+
     surface = Surface,
     onSurface = OnSurface,
     surfaceContainer = Container,
-    secondaryContainer = PrimaryContainer,
-    onSecondaryContainer = OnPrimaryContainer,
-    onSurfaceVariant = Outline,
+
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = OnPrimaryContainer,
+    secondaryContainer = SecondaryContainer,
+    onSecondaryContainer = OnSecondaryContainer,
+
+    onSurfaceVariant = OnSurfaceVariant,
+
+    outline = Outline,
+    outlineVariant = OutlineVariant
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -28,12 +36,20 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = DarkOnPrimary,
     secondary = DarkSecondary,
     onSecondary = DarkOnSecondary,
+
     surface = DarkSurface,
     onSurface = DarkOnSurface,
     surfaceContainer = DarkContainer,
-    secondaryContainer = DarkPrimary,
-    onSecondaryContainer = DarkOnPrimary,
-    onSurfaceVariant = DarkOutline,
+
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+    secondaryContainer = DarkSecondaryContainer,
+    onSecondaryContainer = DarkOnSecondaryContainer,
+
+    onSurfaceVariant = DarkOnSurfaceVariant,
+
+    outline = DarkOutline,
+    outlineVariant = DarkOutlineVariant
 )
 
 
@@ -41,26 +57,27 @@ private val DarkColorScheme = darkColorScheme(
 private val LoginLightColorScheme = lightColorScheme(
     primary = LoginPrimary,
     onPrimary = LoginOnPrimary,
+
+    primaryContainer = LoginOnSurface,
+
     surface = LoginSurface,
     onSurface = LoginOnSurface,
-    primaryContainer = LoginOnSurface,
-    secondaryContainer = LoginOnSurface70,
-    inverseSurface = InverseSurface,
-    inverseOnSurface = InverseOnSurface,
-    outline = Outline
+    onSurfaceVariant = LoginOsSurfaceVariant,
 
+    outline = LoginOutline,
 )
 
 private val LoginDarkColorScheme = darkColorScheme(
     primary = DarkLoginPrimary,
     onPrimary = DarkLoginOnPrimary,
+
+    primaryContainer = DarkLoginOnSurface,
+
     surface = DarkLoginSurface,
     onSurface = DarkLoginOnSurface,
-    primaryContainer = DarkLoginOnSurface,
-    secondaryContainer = DarkLoginOnSurface70,
-    inverseSurface = DarkInverseSurface,
-    inverseOnSurface = DarkInverseOnSurface,
-    outline = Outline
+    onSurfaceVariant = DarkLoginOnSurfaceVariant,
+
+    outline = DarkLoginOutline,
 )
 
 @Composable
