@@ -56,5 +56,12 @@ val Typography = Typography(
         fontSize = 13.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.sp
+    ),
+    headlineLarge = TextStyle(
+        fontFamily = FiraSans,
+        fontWeight = FontWeight.W500,
+        fontSize = 36.sp,
+        lineHeight = 44.sp,
+        letterSpacing = 0.sp
     )
 )

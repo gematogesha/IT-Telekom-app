@@ -1,5 +1,6 @@
 package com.example.it_telekom_app.screens
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,10 +29,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -47,6 +50,11 @@ class DashboardActivity : ComponentActivity() {
             ITTelekomTheme {
                 window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
                 window.navigationBarColor = MaterialTheme.colorScheme.surfaceContainer.toArgb()
+
+                val isLightBackground = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+                val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+                windowInsetsController.isAppearanceLightStatusBars = isLightBackground
+
                 DashboardScreen()
             }
         }
@@ -90,10 +98,10 @@ fun DashboardScreen() {
 fun BottomNavigationBar(navController: NavHostController) {
     var selectedItem by remember { mutableIntStateOf(0) }
 
-    val items = listOf("Главная", "Оплата", "Чат", "Статистика", "Профиль")
-    val labels = listOf("home", "payment", "chat", "statistics", "profile")
-    val selectedIcons = listOf(Icons.Filled.Home, Icons.Filled.AccountBalanceWallet, Icons.Filled.ChatBubble, Icons.Filled.Leaderboard, Icons.Filled.Person)
-    val unselectedIcons = listOf(Icons.Outlined.Home, Icons.Outlined.AccountBalanceWallet, Icons.Outlined.ChatBubbleOutline, Icons.Outlined.Leaderboard, Icons.Outlined.Person)
+    val items = listOf("Главная", "Оплата", "Чат", "Профиль")
+    val labels = listOf("home", "payment", "chat", "profile")
+    val selectedIcons = listOf(Icons.Filled.Home, Icons.Filled.AccountBalanceWallet, Icons.Filled.ChatBubble, Icons.Filled.Person)
+    val unselectedIcons = listOf(Icons.Outlined.Home, Icons.Outlined.AccountBalanceWallet, Icons.Outlined.ChatBubbleOutline, Icons.Outlined.Person)
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -109,7 +117,6 @@ fun BottomNavigationBar(navController: NavHostController) {
                 label = {
                     Text(
                         text = item,
-                        style = MaterialTheme.typography.labelSmall
                     )
                 },
                 selected = selectedItem == index,

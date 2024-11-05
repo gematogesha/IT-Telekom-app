@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <color name="surface">#0e1415</color>
+    <color name="container">#1b2122</color>
+
     <color name="loginSurface">#0e1415</color>
     <color name="loginPrimaryColor">#00513c</color>
 

@@ -1,6 +1,8 @@
 package com.example.it_telekom_app.network
 
 import com.example.it_telekom_app.models.AccountInfo
+import com.example.it_telekom_app.models.PayToDate
+import com.example.it_telekom_app.models.Services
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Field
@@ -22,8 +24,19 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<AccountInfo>
 
+    @GET("check_pay_to_date")
+    suspend fun getPayToDate(
+        @Header("Authorization") token: String
+    ): Response<PayToDate>
+
+    @GET("accounts/get_services")
+    suspend fun getServices(
+        @Header("Authorization") token: String
+    ): Response<Services>
+
     @POST("remove_token")
     suspend fun logout(
         @Header("Authorization") token: String
     ): Response<ResponseBody>
 }
+

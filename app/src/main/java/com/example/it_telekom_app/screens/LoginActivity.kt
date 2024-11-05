@@ -204,7 +204,7 @@ fun LoginScreen() {
                                 withContext(Dispatchers.Main) {
                                     isLoading = false
                                     Log.e("LoginError", "Error: ${e.message}", e)
-                                    snackbarHostState.showSnackbar("Ошибка сети: ${e.message}")
+                                    snackbarHostState.showSnackbar("Ошибка аутентификации")
                                 }
                             }
                         }

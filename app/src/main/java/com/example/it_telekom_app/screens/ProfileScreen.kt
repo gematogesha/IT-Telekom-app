@@ -86,13 +86,11 @@ fun logout(context: Context, snackbarHostState: SnackbarHostState, onComplete: (
     val token = tokenManager.getToken()
 
     if (token == null) {
-        // Если токен отсутствует, просто выполнить выход
         proceedToLogout(context)
-        onComplete() // Завершаем индикатор
+        onComplete()
         return
     }
 
-    // Выполняем POST запрос для удаления токена
     CoroutineScope(Dispatchers.IO).launch {
         try {
             val response = RetrofitInstance.api.logout("Bearer $token")
@@ -106,14 +104,13 @@ fun logout(context: Context, snackbarHostState: SnackbarHostState, onComplete: (
                     Log.e("Logout", "Failed to logout: ${response.message()}")
                     snackbarHostState.showSnackbar("Ошибка аутентификации")
                 }
-                onComplete() // Завершаем индикатор
+                onComplete()
             }
         } catch (e: Exception) {
-            // Ошибка при выполнении запроса
             withContext(Dispatchers.Main) {
                 Log.e("Logout", "Error during logout request: ${e.message}", e)
-                snackbarHostState.showSnackbar("Ошибка сети: ${e.message}")
-                onComplete() // Завершаем индикатор
+                snackbarHostState.showSnackbar("Ошибка аутентификации")
+                onComplete()
             }
         }
     }
