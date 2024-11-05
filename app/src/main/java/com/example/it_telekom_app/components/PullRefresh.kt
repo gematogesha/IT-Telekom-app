@@ -1,5 +1,6 @@
 package com.example.it_telekom_app.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,7 +41,7 @@ fun PullRefresh(
                 enabled = enabled,
                 onRefresh = onRefresh,
             )
-            .fillMaxSize(),
+            .fillMaxSize()
     ) {
         content()
 

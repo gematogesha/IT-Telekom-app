@@ -253,7 +253,7 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
                     modifier = Modifier
                         .weight(1f)
                         .padding(end = 16.dp),
-                    horizontalAlignment = Alignment.Start
+                    horizontalAlignment = Alignment.Start,
                 ) {
                     Text(
                         text = "Лицевой счет",
@@ -379,19 +379,19 @@ fun TariffCard(service: ServiceInfo) {
             ) {
                 Text(
                     text = service.svc_descr.substringAfter(": ").removeSuffix(".").trim(),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
                     text = "Баланс на",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
                     text = "Баланс на",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )

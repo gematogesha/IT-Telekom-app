@@ -8,9 +8,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.it_telekom_app.models.AccountInfo
 import com.example.it_telekom_app.network.RetrofitInstance
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AccountViewModel : ViewModel() {
     var accountInfo by mutableStateOf<AccountInfo?>(null)
@@ -22,13 +23,9 @@ class AccountViewModel : ViewModel() {
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
-    fun loadAccountInfo(token: String?) {
-        fetchAccountInfo(token, true)
-    }
+    fun loadAccountInfo(token: String?) = fetchAccountInfo(token, true)
 
-    fun refreshAccountInfo(token: String?) {
-        fetchAccountInfo(token, false)
-    }
+    fun refreshAccountInfo(token: String?) = fetchAccountInfo(token, false)
 
     private fun fetchAccountInfo(token: String?, isInitialLoad: Boolean) {
         if (token == null) {
@@ -37,49 +34,33 @@ class AccountViewModel : ViewModel() {
         }
 
         viewModelScope.launch {
-            if (isInitialLoad) {
-                isLoading = true
-            } else {
-                isRefreshing = true
-            }
-
+            if (isInitialLoad) isLoading = true else isRefreshing = true
             try {
-                coroutineScope {
-                    val accountDeferred = async { RetrofitInstance.api.getAccountInfo("Bearer $token") }
-                    val payToDateDeferred = async { RetrofitInstance.api.getPayToDate("Bearer $token") }
-                    val servicesDeferred = async { RetrofitInstance.api.getServices("Bearer $token") }
+                val accountResponse = withContext(Dispatchers.IO) { RetrofitInstance.api.getAccountInfo("Bearer $token") }
+                val payToDateResponse = withContext(Dispatchers.IO) { RetrofitInstance.api.getPayToDate("Bearer $token") }
+                val servicesResponse = withContext(Dispatchers.IO) { RetrofitInstance.api.getServices("Bearer $token") }
 
-                    val accountResponse = accountDeferred.await()
-                    val payToDateResponse = payToDateDeferred.await()
-                    val servicesResponse = servicesDeferred.await()
-
-                    if (accountResponse.isSuccessful && accountResponse.body() != null) {
-                        val account = accountResponse.body()!!
-
-                        if (payToDateResponse.isSuccessful && payToDateResponse.body() != null) {
-                            account.payToDate = payToDateResponse.body()
-                        }
-
-                        if (servicesResponse.isSuccessful && servicesResponse.body() != null) {
-                            account.services = servicesResponse.body()!!.services
-                        } else {
-                            account.services = emptyList()
-                        }
-
-                        accountInfo = account
-                        errorMessage = null
-                    } else {
-                        Log.e("AccountViewModel", "Error fetching account info")
-                        errorMessage = "Ошибка получения данных аккаунта"
-                    }
+                if (accountResponse.isSuccessful && accountResponse.body() != null) {
+                    val account = accountResponse.body()!!
+                    account.payToDate = payToDateResponse.body()
+                    account.services = servicesResponse.body()?.services ?: emptyList()
+                    accountInfo = account
+                    errorMessage = null
+                } else {
+                    handleFetchError(isInitialLoad)
                 }
             } catch (e: Exception) {
                 Log.e("AccountViewModel", "Error fetching account info", e)
-                errorMessage = "Ошибка получения данных аккаунта"
+                handleFetchError(isInitialLoad)
+            } finally {
+                delay(500)
+                if (isInitialLoad) isLoading = false else isRefreshing = false
             }
-
-            isLoading = false
-            isRefreshing = false
         }
+    }
+
+    private fun handleFetchError(isInitialLoad: Boolean) {
+        Log.e("AccountViewModel", "Error fetching account info")
+        errorMessage = if (isInitialLoad) "Ошибка получения данных аккаунта" else "Ошибка обновления данных аккаунта"
     }
 }

@@ -52,8 +52,10 @@ class DashboardActivity : ComponentActivity() {
                 window.navigationBarColor = MaterialTheme.colorScheme.surfaceContainer.toArgb()
 
                 val isLightBackground = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+                val isLightNavBackground = MaterialTheme.colorScheme.surfaceContainer.luminance() > 0.5f
                 val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
                 windowInsetsController.isAppearanceLightStatusBars = isLightBackground
+                windowInsetsController.isAppearanceLightNavigationBars = isLightNavBackground
 
                 DashboardScreen()
             }
