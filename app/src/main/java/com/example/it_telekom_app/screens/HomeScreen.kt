@@ -1,6 +1,8 @@
 package com.example.it_telekom_app.screens
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,9 +24,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NoEncryption
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.SignalWifiConnectedNoInternet4
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,13 +45,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.it_telekom_app.components.PullRefresh
 import com.example.it_telekom_app.models.AccountInfo
 import com.example.it_telekom_app.models.ServiceInfo
-import com.example.it_telekom_app.viewmodels.AccountViewModel
+import com.example.it_telekom_app.utils.TokenManager
+import com.example.it_telekom_app.viewmodels.HomeViewModel
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.time.LocalDate
@@ -57,8 +63,10 @@ import java.util.Locale
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen(token: String?) {
-    val viewModel: AccountViewModel = viewModel()
+fun HomeScreen() {
+    val token = TokenManager.getInstance(LocalContext.current).getToken()
+    val viewModel: HomeViewModel = viewModel()
+    val context = LocalContext.current
     val accountInfo = viewModel.accountInfo
     val isLoading = viewModel.isLoading
     val errorMessage = viewModel.errorMessage
@@ -66,14 +74,15 @@ fun HomeScreen(token: String?) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(token) {
-        if (accountInfo == null && !isLoading && !isRefreshing) {
-            viewModel.loadAccountInfo(token)
+        if (viewModel.accountInfo == null && !viewModel.isLoading && !viewModel.isRefreshing) {
+            viewModel.loadAccountInfo(context, token)
         }
     }
 
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
             snackbarHostState.showSnackbar(errorMessage)
+            Log.e("HomeScreen", "Error: $errorMessage")
         }
     }
 
@@ -83,7 +92,9 @@ fun HomeScreen(token: String?) {
             PullRefresh(
                 refreshing = isRefreshing,
                 enabled = true,
-                onRefresh = { viewModel.refreshAccountInfo(token) },
+                onRefresh = {
+                    viewModel.refreshAccountInfo(context, token)
+                },
                 modifier = Modifier.fillMaxSize(),
                 indicatorPadding = PaddingValues(16.dp)
             ) {
@@ -110,17 +121,6 @@ fun HomeScreen(token: String?) {
                                         TariffCard(service)
                                     }
                                 }
-
-                                item {
-
-                                }
-
-                            } else if (errorMessage != null) {
-                                item {
-                                    Text(
-                                        text = errorMessage ?: "Ошибка загрузки данных"
-                                    )
-                                }
                             }
                         }
 
@@ -128,6 +128,25 @@ fun HomeScreen(token: String?) {
                             CircularProgressIndicator(
                                 modifier = Modifier.align(Alignment.Center),
                                 color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        if (errorMessage != null && accountInfo == null) {
+                            Icon(
+                                imageVector = if (errorMessage == "Нет подключения к интернету") {
+                                    Icons.Rounded.SignalWifiConnectedNoInternet4
+                                } else {
+                                    Icons.Outlined.CloudOff
+                                },
+                                tint = MaterialTheme.colorScheme.inverseOnSurface,
+                                contentDescription = "User Locked Icon",
+                                modifier = Modifier
+                                    .size(170.dp)
+                                    .align(Alignment.Center)
+                            )
+                            Text(
+                                modifier = Modifier.align(Alignment.Center),
+                                text = errorMessage ?: "Ошибка загрузки данных"
                             )
                         }
                     }
@@ -145,7 +164,7 @@ fun CardTop(info: AccountInfo) {
             .padding(bottom = 16.dp)
             .wrapContentHeight(),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Row(
@@ -184,7 +203,7 @@ fun CardTop(info: AccountInfo) {
 
                 Text(
                     text = "№" + info.num_dog,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -193,7 +212,7 @@ fun CardTop(info: AccountInfo) {
             Box(
                 modifier = Modifier
                     .size(40.dp) //
-                    .background(MaterialTheme.colorScheme.outlineVariant, shape = CircleShape),
+                    .background(MaterialTheme.colorScheme.inverseOnSurface, shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -236,7 +255,7 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
             .fillMaxWidth()
             .padding(bottom = 16.dp),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
@@ -263,7 +282,7 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = accountInfo.num_dog,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -282,14 +301,14 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
                     ) {
                         Text(
                             text = if (isPayToDateExpired) "Просрочен" else "Активен",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = accountInfo.payToDate?.to_date ?: "",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = ("до " + accountInfo.payToDate?.to_date) ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.outline,
                         textAlign = TextAlign.Center
                     )
@@ -307,7 +326,7 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
                 ) {
                     Text(
                         text = "Баланс на $current",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
@@ -332,13 +351,14 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
 
 @Composable
 fun TariffCard(service: ServiceInfo) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)
             .wrapContentHeight(),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
+        elevation = CardDefaults.cardElevation(1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
@@ -360,7 +380,7 @@ fun TariffCard(service: ServiceInfo) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Тариф",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(6.dp))
@@ -404,11 +424,14 @@ fun TariffCard(service: ServiceInfo) {
             ) {
                 Text(
                     text = "Изменить тариф",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
                 IconButton(
-                    onClick = { },
+                    onClick = {
+                        val intent = Intent(context, ChangeTariffActivity::class.java)
+                        context.startActivity(intent)
+                    },
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(

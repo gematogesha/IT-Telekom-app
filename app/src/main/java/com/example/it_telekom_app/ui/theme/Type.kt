@@ -18,8 +18,8 @@ val Typography = Typography(
     bodyMedium = TextStyle(
         fontFamily = FiraSans,
         fontWeight = FontWeight.W400,
-        fontSize = 16.sp,
-        lineHeight = 20.sp,
+        fontSize = 14.sp,
+        lineHeight = 16.sp,
         letterSpacing = 0.sp
     ),
     bodyLarge = TextStyle(
@@ -32,8 +32,8 @@ val Typography = Typography(
     bodySmall = TextStyle(
         fontFamily = FiraSans,
         fontWeight = FontWeight.W400,
-        fontSize = 14.sp,
-        lineHeight = 18.sp,
+        fontSize = 16.sp,
+        lineHeight = 20.sp,
         letterSpacing = 0.sp
     ),
     titleMedium = TextStyle(

@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.storage)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.generativeai)
 
     // Зависимости для тестирования
     testImplementation(libs.junit)

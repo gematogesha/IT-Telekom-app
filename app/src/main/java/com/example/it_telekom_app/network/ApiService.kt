@@ -3,8 +3,10 @@ package com.example.it_telekom_app.network
 import com.example.it_telekom_app.models.AccountInfo
 import com.example.it_telekom_app.models.PayToDate
 import com.example.it_telekom_app.models.Services
+import com.example.it_telekom_app.models.Tariffs
 import okhttp3.ResponseBody
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
@@ -33,6 +35,22 @@ interface ApiService {
     suspend fun getServices(
         @Header("Authorization") token: String
     ): Response<Services>
+
+    @GET("accounts/get_possible_tariff")
+    suspend fun getTariffs(
+        @Header("Authorization") token: String
+    ): Response<Tariffs>
+
+    @POST("accounts/change_tariff")
+    suspend fun setTariff(
+        @Header("Authorization") token: String,
+        @Body tariffId: Int
+    ): Response<Unit>
+
+    @POST("accounts/undo_change_tariff")
+    suspend fun undoChangeTariff(
+        @Header("Authorization") token: String
+    ): Response<Unit>
 
     @POST("remove_token")
     suspend fun logout(

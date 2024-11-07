@@ -13,6 +13,8 @@ import androidx.compose.ui.platform.LocalContext
 private val LightColorScheme = lightColorScheme(
     primary = Primary,
     onPrimary = OnPrimary,
+    inversePrimary = InversePrimary,
+
     secondary = Secondary,
     onSecondary = OnSecondary,
 
@@ -25,6 +27,9 @@ private val LightColorScheme = lightColorScheme(
     secondaryContainer = SecondaryContainer,
     onSecondaryContainer = OnSecondaryContainer,
 
+    inverseSurface = InverseSurface,
+    inverseOnSurface = InverseOnSurface,
+
     onSurfaceVariant = OnSurfaceVariant,
 
     outline = Outline,
@@ -34,6 +39,8 @@ private val LightColorScheme = lightColorScheme(
 private val DarkColorScheme = darkColorScheme(
     primary = DarkPrimary,
     onPrimary = DarkOnPrimary,
+    inversePrimary = DarkInversePrimary,
+
     secondary = DarkSecondary,
     onSecondary = DarkOnSecondary,
 
@@ -45,6 +52,9 @@ private val DarkColorScheme = darkColorScheme(
     onPrimaryContainer = DarkOnPrimaryContainer,
     secondaryContainer = DarkSecondaryContainer,
     onSecondaryContainer = DarkOnSecondaryContainer,
+
+    inverseSurface = DarkInverseSurface,
+    inverseOnSurface = DarkInverseOnSurface,
 
     onSurfaceVariant = DarkOnSurfaceVariant,
 
