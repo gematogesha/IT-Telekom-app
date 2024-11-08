@@ -17,13 +17,16 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.rounded.SignalWifiConnectedNoInternet4
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -192,26 +195,20 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                                             onOptionSelected(tariff.caption)
                                                         },
                                                         role = Role.RadioButton
-                                                    )
-                                                    .padding(horizontal = 16.dp),
+                                                    ),
+                                                    //.padding(horizontal = 16.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                RadioButton(
-                                                    selected = (tariff.caption == selectedOption),
-                                                    onClick = null // null recommended for accessibility with screenreaders
+                                                ListItem(
+                                                    headlineContent = { Text(tariff.caption) },
+                                                    supportingContent = { Text("Скорость: ${foramttedSpeed}, Абон. плата: ${formattedAbonplata}") },
+                                                    leadingContent = {
+                                                        RadioButton(
+                                                            selected = (tariff.caption == selectedOption),
+                                                            onClick = null // null recommended for accessibility with screenreaders
+                                                        )
+                                                    }
                                                 )
-                                                Column(modifier = Modifier.padding(start = 16.dp)) {
-                                                    Text(
-                                                        text = tariff.caption,
-                                                        style = MaterialTheme.typography.bodyLarge
-                                                    )
-                                                    Text(
-                                                        text = "Скорость: ${foramttedSpeed}, Абон. плата: ${formattedAbonplata}",
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = MaterialTheme.colorScheme.outline,
-                                                        modifier = Modifier.padding(top = 4.dp)
-                                                    )
-                                                }
                                             }
                                         }
                                     }
