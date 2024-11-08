@@ -1,5 +1,6 @@
 package com.example.it_telekom_app.screens
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -44,18 +45,31 @@ import com.example.it_telekom_app.utils.TokenManager
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            ITTelekomTheme {
-                window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
-                window.navigationBarColor = MaterialTheme.colorScheme.surfaceContainer.toArgb()
+        val tokenManager = TokenManager.getInstance(this)
+        val token = tokenManager.getToken()
 
-                val isLightBackground = MaterialTheme.colorScheme.surface.luminance() > 0.5f
-                val isLightNavBackground = MaterialTheme.colorScheme.surfaceContainer.luminance() > 0.5f
-                val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
-                windowInsetsController.isAppearanceLightStatusBars = isLightBackground
-                windowInsetsController.isAppearanceLightNavigationBars = isLightNavBackground
 
-                DashboardScreen()
+        if (token == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+        } else {
+
+            setContent {
+                ITTelekomTheme {
+                    window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
+                    window.navigationBarColor = MaterialTheme.colorScheme.surfaceContainer.toArgb()
+
+                    val isLightBackground = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+                    val isLightNavBackground =
+                        MaterialTheme.colorScheme.surfaceContainer.luminance() > 0.5f
+                    val windowInsetsController =
+                        WindowInsetsControllerCompat(window, window.decorView)
+                    windowInsetsController.isAppearanceLightStatusBars = isLightBackground
+                    windowInsetsController.isAppearanceLightNavigationBars = isLightNavBackground
+
+                    DashboardScreen()
+
+                }
             }
         }
     }
