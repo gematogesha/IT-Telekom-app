@@ -46,8 +46,8 @@ class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val tokenManager = TokenManager.getInstance(this)
-        val token = tokenManager.getToken()
-
+        val activeAccount = tokenManager.getActiveAccount()
+        val token = activeAccount?.let { tokenManager.getToken(it) }
 
         if (token == null) {
             startActivity(Intent(this, LoginActivity::class.java))

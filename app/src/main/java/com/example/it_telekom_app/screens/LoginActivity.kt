@@ -62,13 +62,19 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val token = TokenManager.getInstance(this).getToken()
         var showSplashScreen = true
-        if (token != null) {
-            Log.d("LoginActivity", "User is logged in, navigating to Dashboard")
-            startActivity(Intent(this, DashboardActivity::class.java))
-            finish()
-            return
+        val isAddingAccount = intent.getBooleanExtra("isAddingAccount", false)
+
+        if (!isAddingAccount) {
+            val activeAccount = TokenManager.getInstance(this).getActiveAccount()
+            val token = activeAccount?.let { TokenManager.getInstance(this).getToken(it) }
+
+            if (token != null) {
+                Log.d("LoginActivity", "User is logged in as $activeAccount, navigating to Dashboard")
+                startActivity(Intent(this, DashboardActivity::class.java))
+                finish()
+                return
+            }
         }
 
         lifecycleScope.launch {
@@ -92,22 +98,8 @@ class LoginActivity : ComponentActivity() {
     }
 }
 
-fun getEncryptedSharedPreferences(context: Context): SharedPreferences {
-    val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
-
-    return EncryptedSharedPreferences.create(
-        context,
-        "encrypted_user_prefs",
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
-}
-
-fun saveToken(context: Context, token: String) {
-    TokenManager.getInstance(context).saveToken(token)
+fun saveToken(context: Context, username: String, token: String) {
+    TokenManager.getInstance(context).saveToken(username, token)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -179,31 +171,43 @@ fun LoginScreen() {
 
                 Button(
                     onClick = {
-                        isLoading = true
-                        CoroutineScope(Dispatchers.IO).launch {
-                            try {
-                                val response = RetrofitInstance.api.login(login, password)
-                                Log.d("Responce", response.body().toString())
-                                if (response.isSuccessful && response.body() != null) {
-                                    val token = response.body()!!.string().trim()
-                                    saveToken(context, token)
+                        if (TokenManager.getInstance(context).hasAccount(login)) {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                snackbarHostState.showSnackbar("Этот аккаунт уже добавлен")
+                            }
+                        } else {
+                            isLoading = true
+                            CoroutineScope(Dispatchers.IO).launch {
+                                try {
+                                    val response = RetrofitInstance.api.login(login, password)
+                                    Log.d("Responce", response.body().toString())
+                                    if (response.isSuccessful && response.body() != null) {
+                                        val token = response.body()!!.string().trim()
+                                        saveToken(context, login, token)
+                                        TokenManager.getInstance(context).setActiveAccount(login)
 
-                                    withContext(Dispatchers.Main) {
-                                        isLoading = false
-                                        context.startActivity(Intent(context, DashboardActivity::class.java))
-                                        (context as? ComponentActivity)?.finish()
+                                        withContext(Dispatchers.Main) {
+                                            isLoading = false
+                                            context.startActivity(
+                                                Intent(
+                                                    context,
+                                                    DashboardActivity::class.java
+                                                )
+                                            )
+                                            (context as? ComponentActivity)?.finish()
+                                        }
+                                    } else {
+                                        withContext(Dispatchers.Main) {
+                                            isLoading = false
+                                            snackbarHostState.showSnackbar("Ошибка аутентификации")
+                                        }
                                     }
-                                } else {
+                                } catch (e: Exception) {
                                     withContext(Dispatchers.Main) {
                                         isLoading = false
+                                        Log.e("LoginError", "Error: ${e.message}", e)
                                         snackbarHostState.showSnackbar("Ошибка аутентификации")
                                     }
-                                }
-                            } catch (e: Exception) {
-                                withContext(Dispatchers.Main) {
-                                    isLoading = false
-                                    Log.e("LoginError", "Error: ${e.message}", e)
-                                    snackbarHostState.showSnackbar("Ошибка аутентификации")
                                 }
                             }
                         }

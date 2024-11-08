@@ -25,13 +25,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NoEncryption
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.SignalWifiConnectedNoInternet4
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,7 +46,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -64,18 +71,27 @@ import java.util.Locale
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen() {
-    val token = TokenManager.getInstance(LocalContext.current).getToken()
-    val viewModel: HomeViewModel = viewModel()
     val context = LocalContext.current
+    val tokenManager = TokenManager.getInstance(context)
+    val accounts = tokenManager.getAllAccounts().toList()
+    var selectedAccount by remember { mutableStateOf(tokenManager.getActiveAccount()) }
+    val viewModel: HomeViewModel = viewModel()
     val accountInfo = viewModel.accountInfo
     val isLoading = viewModel.isLoading
     val errorMessage = viewModel.errorMessage
     val isRefreshing = viewModel.isRefreshing
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(token) {
-        if (viewModel.accountInfo == null && !viewModel.isLoading && !viewModel.isRefreshing) {
-            viewModel.loadAccountInfo(context, token)
+    LaunchedEffect(selectedAccount) {
+        if (selectedAccount != null) {
+            tokenManager.setActiveAccount(selectedAccount!!)
+            if (!viewModel.isDataLoaded) {
+                viewModel.loadAccountInfo()
+            }
+        } else {
+            val intent = Intent(context, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            context.startActivity(intent)
         }
     }
 
@@ -93,7 +109,7 @@ fun HomeScreen() {
                 refreshing = isRefreshing,
                 enabled = true,
                 onRefresh = {
-                    viewModel.refreshAccountInfo(context, token)
+                    viewModel.refreshAccountInfo()
                 },
                 modifier = Modifier.fillMaxSize(),
                 indicatorPadding = PaddingValues(16.dp)
@@ -107,28 +123,37 @@ fun HomeScreen() {
                             .fillMaxSize()
                             .padding(all = 16.dp)
                     ) {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                        ) {
-                            if (accountInfo != null) {
-                                item {
-                                    CardTop(accountInfo)
-                                    AccountBalanceCard(accountInfo)
-                                }
-
-                                accountInfo.services.let { services ->
-                                    items(services) { service ->
-                                        TariffCard(service)
-                                    }
-                                }
-                            }
-                        }
 
                         if (isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.align(Alignment.Center),
                                 color = MaterialTheme.colorScheme.primary
                             )
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                            ) {
+                                if (accountInfo != null) {
+                                    item {
+                                        CardTop(
+                                            info = accountInfo,
+                                            accounts = accounts,
+                                            selectedAccount = selectedAccount,
+                                            onAccountSelected = { account ->
+                                                selectedAccount = account
+                                                viewModel.isDataLoaded = false
+                                            }
+                                        )
+                                        AccountBalanceCard(accountInfo)
+                                    }
+
+                                    accountInfo.services.let { services ->
+                                        items(services) { service ->
+                                            TariffCard(service)
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         if (errorMessage != null && accountInfo == null) {
@@ -139,7 +164,7 @@ fun HomeScreen() {
                                     Icons.Outlined.CloudOff
                                 },
                                 tint = MaterialTheme.colorScheme.inverseOnSurface,
-                                contentDescription = "User Locked Icon",
+                                contentDescription = "Error Icon",
                                 modifier = Modifier
                                     .size(170.dp)
                                     .align(Alignment.Center)
@@ -156,8 +181,17 @@ fun HomeScreen() {
     )
 }
 
+
 @Composable
-fun CardTop(info: AccountInfo) {
+fun CardTop(
+    info: AccountInfo,
+    accounts: List<String>,
+    selectedAccount: String?,
+    onAccountSelected: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val userAbbreviatedName = abbreviateName(info.name)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -191,27 +225,84 @@ fun CardTop(info: AccountInfo) {
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(end = 12.dp),
+                    .padding(start = 22.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Абонент №1",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = userAbbreviatedName ?: "Выберите аккаунт",
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "№" + info.num_dog,
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                    IconButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
 
-                Text(
-                    text = "№" + info.num_dog,
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.outline
-                )
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    accounts.forEach { account ->
+                        DropdownMenuItem(
+                            enabled = selectedAccount != account,
+                            leadingIcon = {
+                              Icon(
+                                  imageVector = Icons.Rounded.Person,
+                                  contentDescription = "User Icon",
+                                  modifier = Modifier.size(32.dp)
+                              )
+                            },
+                            text = {
+                                Column {
+                                    if (selectedAccount != null) {
+                                        Text(
+                                            text = info.name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                        )
+                                    }
+                                    Text(
+                                        text = "№$account",
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                            },
+                            onClick = {
+                                expanded = false
+                                onAccountSelected(account)
+                            }
+                        )
+                    }
+                }
             }
 
             Box(
                 modifier = Modifier
-                    .size(40.dp) //
+                    .size(40.dp)
                     .background(MaterialTheme.colorScheme.inverseOnSurface, shape = CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -223,13 +314,24 @@ fun CardTop(info: AccountInfo) {
                     },
                     tint = MaterialTheme.colorScheme.onSurface,
                     contentDescription = "User Locked Icon",
-                    modifier = Modifier.size(20.dp) // Размер иконки
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
     }
 }
 
+fun abbreviateName(fullName: String): String {
+    val parts = fullName.trim().split("\\s+".toRegex())
+    if (parts.isEmpty()) return fullName
+
+    val surname = parts[0]
+    val initials = parts.drop(1).mapNotNull { part ->
+        part.firstOrNull()?.let { "${it.uppercaseChar()}." }
+    }.joinToString("")
+
+    return if (initials.isNotEmpty()) "$surname $initials" else surname
+}
 @Composable
 fun AccountBalanceCard(accountInfo: AccountInfo) {
     val formatter = DateTimeFormatter.ofPattern("dd.MM")

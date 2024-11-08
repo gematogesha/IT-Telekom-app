@@ -4,42 +4,16 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.rounded.SignalWifiConnectedNoInternet4
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
@@ -82,11 +56,13 @@ class ChangeTariffActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangeTariffScreen(onBackPressed: () -> Unit) {
-    val token = TokenManager.getInstance(LocalContext.current).getToken()
+    val context = LocalContext.current
+    val tokenManager = TokenManager.getInstance(context)
+    val activeAccount = tokenManager.getActiveAccount()
+
     val viewModel: TariffViewModel = viewModel()
     val homeViewModel: HomeViewModel = viewModel()
     val accountInfo = homeViewModel.accountInfo
-    val context = LocalContext.current
     val tariffs = viewModel.tariffs
     val isLoading = viewModel.isLoading
     val errorMessage = viewModel.errorMessage
@@ -95,20 +71,31 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
     val tariffChangeMessage = viewModel.tariffChangeMessage
     val isTariffChangeSuccessful = viewModel.isTariffChangeSuccessful
 
-    LaunchedEffect(token) {
-        if (viewModel.tariffs == null && !viewModel.isLoading && !viewModel.isRefreshing) {
-            token?.let {
-                viewModel.loadTariffInfo(context, it)
+    // Загрузка данных при первом запуске
+    LaunchedEffect(Unit) {
+        // Проверяем, есть ли активный аккаунт
+        if (activeAccount != null) {
+            // Загружаем данные, если еще не загружены
+            if (viewModel.tariffs == null && !viewModel.isLoading && !viewModel.isRefreshing) {
+                viewModel.loadTariffInfo()
             }
+            if (homeViewModel.accountInfo == null && !homeViewModel.isLoading && !homeViewModel.isRefreshing) {
+                homeViewModel.loadAccountInfo()
+            }
+        } else {
+            // Если нет активного аккаунта, перенаправляем на экран входа или показываем сообщение
+            // Здесь вы можете реализовать логику перенаправления
         }
     }
 
+    // Обработка сообщений об ошибках
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
         }
     }
 
+    // Обработка сообщений о смене тарифа
     LaunchedEffect(tariffChangeMessage) {
         tariffChangeMessage?.let {
             val result = snackbarHostState.showSnackbar(
@@ -117,7 +104,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                 actionLabel = if (isTariffChangeSuccessful) "Отменить" else null
             )
             if (result == SnackbarResult.ActionPerformed && isTariffChangeSuccessful) {
-                viewModel.undoChangeTariff(context, token)
+                viewModel.undoChangeTariff()
             }
             viewModel.clearTariffChangeMessage()
         }
@@ -145,9 +132,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
             refreshing = isRefreshing,
             enabled = true,
             onRefresh = {
-                token?.let {
-                    viewModel.refreshTariffInfo(context, it)
-                }
+                viewModel.refreshTariffInfo()
             },
             modifier = Modifier
                 .fillMaxSize()
@@ -161,19 +146,20 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                     modifier = Modifier
                         .fillMaxSize()
                 ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        item {
-                            tariffs?.tariffs?.let { tariffsList ->
-                                val radioOptions = tariffsList.map { it.caption }
-                                val initialSelectedOption = accountInfo?.tariff_caption.takeIf { it in radioOptions } ?: radioOptions.firstOrNull() ?: ""
-                                val (selectedOption, onOptionSelected) = remember { mutableStateOf(initialSelectedOption) }
+                    if (tariffs != null && accountInfo != null) {
+                        val tariffsList = tariffs.tariffs
+                        val radioOptions = tariffsList.map { it.caption }
+                        val initialSelectedOption = accountInfo.tariff_caption.takeIf { it in radioOptions } ?: radioOptions.firstOrNull() ?: ""
+                        var selectedOption by remember { mutableStateOf(initialSelectedOption) }
 
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            item {
                                 if (tariffsList.isNotEmpty()) {
                                     Column(Modifier.selectableGroup()) {
                                         tariffsList.forEach { tariff ->
-                                            val foramttedSpeed = tariff.speed.replace("[.*]+$".toRegex(), "")
+                                            val formattedSpeed = tariff.speed.replace("[.*]+$".toRegex(), "")
                                             val formattedAbonplata = tariff.abonplata
                                                 .replace("\u00a0", "")
                                                 .replace("руб.", "")
@@ -192,20 +178,19 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                                     .selectable(
                                                         selected = (tariff.caption == selectedOption),
                                                         onClick = {
-                                                            onOptionSelected(tariff.caption)
+                                                            selectedOption = tariff.caption
                                                         },
                                                         role = Role.RadioButton
                                                     ),
-                                                    //.padding(horizontal = 16.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 ListItem(
                                                     headlineContent = { Text(tariff.caption) },
-                                                    supportingContent = { Text("Скорость: ${foramttedSpeed}, Абон. плата: ${formattedAbonplata}") },
+                                                    supportingContent = { Text("Скорость: ${formattedSpeed}, Абон. плата: ${formattedAbonplata}") },
                                                     leadingContent = {
                                                         RadioButton(
                                                             selected = (tariff.caption == selectedOption),
-                                                            onClick = null // null recommended for accessibility with screenreaders
+                                                            onClick = null
                                                         )
                                                     }
                                                 )
@@ -223,11 +208,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                             onClick = {
                                                 tariffsList.find { it.caption == selectedOption }
                                                     ?.let { selectedTariff ->
-                                                        viewModel.changeTariff(
-                                                            context,
-                                                            token,
-                                                            selectedTariff.id
-                                                        )
+                                                        viewModel.changeTariff(selectedTariff.id)
                                                     }
                                             },
                                         ) {
@@ -244,32 +225,34 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                 }
                             }
                         }
-                    }
-
-                    if (isLoading) {
+                    } else if (isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.align(Alignment.Center),
                             color = MaterialTheme.colorScheme.primary
                         )
-                    }
-
-                    if (errorMessage != null && tariffs == null) {
-                        Icon(
-                            imageVector = if (errorMessage == "Нет подключения к интернету") {
-                                Icons.Rounded.SignalWifiConnectedNoInternet4
-                            } else {
-                                Icons.Outlined.CloudOff
-                            },
-                            tint = MaterialTheme.colorScheme.inverseOnSurface,
-                            contentDescription = "User Locked Icon",
+                    } else if (errorMessage != null) {
+                        Column(
                             modifier = Modifier
-                                .size(170.dp)
-                                .align(Alignment.Center)
-                        )
-                        Text(
-                            modifier = Modifier.align(Alignment.Center),
-                            text = errorMessage ?: "Ошибка загрузки данных"
-                        )
+                                .fillMaxSize()
+                                .align(Alignment.Center),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = if (errorMessage == "Нет подключения к интернету") {
+                                    Icons.Rounded.SignalWifiConnectedNoInternet4
+                                } else {
+                                    Icons.Outlined.CloudOff
+                                },
+                                tint = MaterialTheme.colorScheme.inverseOnSurface,
+                                contentDescription = "Error Icon",
+                                modifier = Modifier
+                                    .size(170.dp)
+                            )
+                            Text(
+                                text = errorMessage ?: "Ошибка загрузки данных"
+                            )
+                        }
                     }
                 }
             }

@@ -4,9 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -33,6 +35,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.Row
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -40,6 +48,10 @@ fun ProfileScreen() {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var isLoggingOut by remember { mutableStateOf(false) }
+
+    val tokenManager = TokenManager.getInstance(context)
+    val accounts = tokenManager.getAllAccounts()
+    val activeAccount = tokenManager.getActiveAccount()
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -55,7 +67,42 @@ fun ProfileScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                Text("Profile Screen", fontSize = 20.sp)
+                Text("Профиль", fontSize = 20.sp)
+
+                Text("Активный аккаунт: $activeAccount", fontSize = 16.sp)
+                Text("Доступные аккаунты:", fontSize = 16.sp)
+
+                accounts.forEach { account ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                tokenManager.setActiveAccount(account)
+                            }
+                    ) {
+                        RadioButton(
+                            selected = account == activeAccount,
+                            onClick = {
+                                tokenManager.setActiveAccount(account)
+                            }
+                        )
+                        Text(account)
+                        IconButton(onClick = {
+                            tokenManager.removeToken(account)
+                            if (account == activeAccount) {
+                                val remainingAccounts = tokenManager.getAllAccounts()
+                                if (remainingAccounts.isNotEmpty()) {
+                                    tokenManager.setActiveAccount(remainingAccounts.first())
+                                } else {
+                                    proceedToLogout(context)
+                                }
+                            }
+                        }) {
+                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Удалить аккаунт")
+                        }
+                    }
+                }
 
                 Button(
                     onClick = {
@@ -76,6 +123,14 @@ fun ProfileScreen() {
                         Text("Выход")
                     }
                 }
+
+                Button(onClick = {
+                    val intent = Intent(context, LoginActivity::class.java)
+                    intent.putExtra("isAddingAccount", true)
+                    context.startActivity(intent)
+                }) {
+                    Text("Добавить аккаунт")
+                }
             }
         }
     }
@@ -83,7 +138,8 @@ fun ProfileScreen() {
 
 fun logout(context: Context, snackbarHostState: SnackbarHostState, onComplete: () -> Unit) {
     val tokenManager = TokenManager.getInstance(context)
-    val token = tokenManager.getToken()
+    val activeAccount = tokenManager.getActiveAccount()
+    val token = activeAccount?.let { tokenManager.getToken(it) }
 
     if (token == null) {
         proceedToLogout(context)
@@ -96,10 +152,14 @@ fun logout(context: Context, snackbarHostState: SnackbarHostState, onComplete: (
             val response = RetrofitInstance.api.logout("Bearer $token")
             withContext(Dispatchers.Main) {
                 if (response.isSuccessful) {
-                    // Успешно удалили токен на сервере
-                    tokenManager.clearToken()
+                    tokenManager.removeToken(activeAccount)
                     Log.d("TokenManager", "Token cleared, user logged out")
-                    proceedToLogout(context)
+                    val remainingAccounts = tokenManager.getAllAccounts()
+                    if (remainingAccounts.isNotEmpty()) {
+                        tokenManager.setActiveAccount(remainingAccounts.first())
+                    } else {
+                        proceedToLogout(context)
+                    }
                 } else {
                     Log.e("Logout", "Failed to logout: ${response.message()}")
                     snackbarHostState.showSnackbar("Ошибка аутентификации")
@@ -115,7 +175,6 @@ fun logout(context: Context, snackbarHostState: SnackbarHostState, onComplete: (
         }
     }
 }
-
 private fun proceedToLogout(context: Context) {
     val intent = Intent(context, LoginActivity::class.java)
     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
