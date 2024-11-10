@@ -13,21 +13,25 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.NoEncryption
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.SignalWifiConnectedNoInternet4
 import androidx.compose.material3.Button
@@ -59,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.it_telekom_app.components.PullRefresh
 import com.example.it_telekom_app.models.AccountInfo
 import com.example.it_telekom_app.models.ServiceInfo
+import com.example.it_telekom_app.ui.util.ErrorDisplay
 import com.example.it_telekom_app.utils.TokenManager
 import com.example.it_telekom_app.viewmodels.HomeViewModel
 import java.text.DecimalFormat
@@ -157,21 +162,9 @@ fun HomeScreen() {
                         }
 
                         if (errorMessage != null && accountInfo == null) {
-                            Icon(
-                                imageVector = if (errorMessage == "Нет подключения к интернету") {
-                                    Icons.Rounded.SignalWifiConnectedNoInternet4
-                                } else {
-                                    Icons.Outlined.CloudOff
-                                },
-                                tint = MaterialTheme.colorScheme.inverseOnSurface,
-                                contentDescription = "Error Icon",
-                                modifier = Modifier
-                                    .size(170.dp)
-                                    .align(Alignment.Center)
-                            )
-                            Text(
+                            ErrorDisplay(
+                                errorMessage = errorMessage,
                                 modifier = Modifier.align(Alignment.Center),
-                                text = errorMessage ?: "Ошибка загрузки данных"
                             )
                         }
                     }
@@ -264,32 +257,32 @@ fun CardTop(
                 }
 
                 DropdownMenu(
+                    modifier = Modifier
+                        .wrapContentSize(Alignment.TopCenter),
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
                     accounts.forEach { account ->
                         DropdownMenuItem(
                             enabled = selectedAccount != account,
-                            leadingIcon = {
-                              Icon(
-                                  imageVector = Icons.Rounded.Person,
-                                  contentDescription = "User Icon",
-                                  modifier = Modifier.size(32.dp)
-                              )
-                            },
-                            text = {
-                                Column {
-                                    if (selectedAccount != null) {
-                                        Text(
-                                            text = info.name,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                        )
-                                    }
-                                    Text(
-                                        text = "№$account",
-                                        style = MaterialTheme.typography.bodySmall,
+                            trailingIcon = {
+                                if (selectedAccount == account) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = "User Icon",
                                     )
                                 }
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.Person,
+                                    contentDescription = "User Icon",
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = "№$account",
+                                )
                             },
                             onClick = {
                                 expanded = false

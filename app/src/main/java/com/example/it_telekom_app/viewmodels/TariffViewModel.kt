@@ -6,6 +6,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import com.example.it_telekom_app.models.AccountInfo
+import com.example.it_telekom_app.models.PayToDate
+import com.example.it_telekom_app.models.Services
 import com.example.it_telekom_app.models.Tariffs
 import com.example.it_telekom_app.network.RetrofitInstance
 import com.example.it_telekom_app.utils.TokenManager
@@ -21,7 +24,13 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
     var isTariffChangeSuccessful by mutableStateOf(false)
         private set
 
-    fun loadTariffInfo(isInitialLoad: Boolean = true) {
+    var isDataLoaded by mutableStateOf(false)
+
+    fun loadTariffInfo(forceReload: Boolean = false) {
+        if (isDataLoaded && !forceReload) {
+            return
+        }
+
         val context = getApplication<Application>().applicationContext
         val tokenManager = TokenManager.getInstance(context)
         val activeAccount = tokenManager.getActiveAccount()
@@ -33,7 +42,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
         }
 
         fetchData(
-            isInitialLoad = isInitialLoad,
+            isInitialLoad = !forceReload,
             requests = listOf(
                 { RetrofitInstance.api.getTariffs("Bearer $token") }
             )
@@ -41,12 +50,14 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
             val tariffResponse = responses[0] as? Tariffs
             tariffResponse?.let {
                 tariffs = it
+                isDataLoaded = true
             }
         }
     }
 
     fun refreshTariffInfo() {
-        loadTariffInfo(isInitialLoad = false)
+        isDataLoaded = false // Reset the flag to force data reload
+        loadTariffInfo(forceReload = true)
     }
 
     fun changeTariff(tariffId: Int) {

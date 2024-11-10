@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.gson)
+    implementation(libs.accompanist.systemuicontroller)
 
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.navigation.compose)

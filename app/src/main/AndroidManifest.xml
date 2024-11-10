@@ -34,6 +34,10 @@
             android:name=".screens.ChangeTariffActivity"
             android:theme="@style/Theme.ITTelekom">
         </activity>
+        <activity
+            android:name=".screens.SettingsActivity"
+            android:theme="@style/Theme.ITTelekom">
+        </activity>
     </application>
 
 </manifest>

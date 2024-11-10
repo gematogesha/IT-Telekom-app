@@ -15,17 +15,18 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = OnPrimary,
     inversePrimary = InversePrimary,
 
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = OnPrimaryContainer,
+
     secondary = Secondary,
     onSecondary = OnSecondary,
+
+    secondaryContainer = SecondaryContainer,
+    onSecondaryContainer = OnSecondaryContainer,
 
     surface = Surface,
     onSurface = OnSurface,
     surfaceContainer = Container,
-
-    primaryContainer = PrimaryContainer,
-    onPrimaryContainer = OnPrimaryContainer,
-    secondaryContainer = SecondaryContainer,
-    onSecondaryContainer = OnSecondaryContainer,
 
     inverseSurface = InverseSurface,
     inverseOnSurface = InverseOnSurface,
@@ -41,17 +42,18 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = DarkOnPrimary,
     inversePrimary = DarkInversePrimary,
 
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+
     secondary = DarkSecondary,
     onSecondary = DarkOnSecondary,
+
+    secondaryContainer = DarkSecondaryContainer,
+    onSecondaryContainer = DarkOnSecondaryContainer,
 
     surface = DarkSurface,
     onSurface = DarkOnSurface,
     surfaceContainer = DarkContainer,
-
-    primaryContainer = DarkPrimaryContainer,
-    onPrimaryContainer = DarkOnPrimaryContainer,
-    secondaryContainer = DarkSecondaryContainer,
-    onSecondaryContainer = DarkOnSecondaryContainer,
 
     inverseSurface = DarkInverseSurface,
     inverseOnSurface = DarkInverseOnSurface,

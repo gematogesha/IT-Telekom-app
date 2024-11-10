@@ -17,7 +17,6 @@ class HomeViewModel(application: Application) : BaseViewModel(application) {
 
     fun loadAccountInfo(forceReload: Boolean = false) {
         if (isDataLoaded && !forceReload) {
-            // Data is already loaded and no force reload requested
             return
         }
 
