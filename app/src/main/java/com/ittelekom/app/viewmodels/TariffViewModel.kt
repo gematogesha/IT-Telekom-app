@@ -1,0 +1,136 @@
+package com.ittelekom.app.viewmodels
+
+import android.app.Application
+import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
+import com.ittelekom.app.models.Tariffs
+import com.ittelekom.app.network.RetrofitInstance
+import com.ittelekom.app.utils.TokenManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+class TariffViewModel(application: Application) : BaseViewModel(application) {
+    var tariffs by mutableStateOf<Tariffs?>(null)
+        private set
+    var tariffChangeMessage by mutableStateOf<String?>(null)
+        private set
+    var isTariffChangeSuccessful by mutableStateOf(false)
+        private set
+
+    var isDataLoaded by mutableStateOf(false)
+
+    fun loadTariffInfo(forceReload: Boolean = false) {
+        if (isDataLoaded && !forceReload) {
+            return
+        }
+
+        val context = getApplication<Application>().applicationContext
+        val tokenManager = TokenManager.getInstance(context)
+        val activeAccount = tokenManager.getActiveAccount()
+        val token = activeAccount?.let { tokenManager.getToken(it) }
+
+        if (token == null) {
+            _errorMessage.value = "Пожалуйста, войдите снова."
+            return
+        }
+
+        fetchData(
+            isInitialLoad = !forceReload,
+            requests = listOf(
+                { RetrofitInstance.api.getTariffs("Bearer $token") }
+            )
+        ) { responses ->
+            val tariffResponse = responses[0] as? Tariffs
+            tariffResponse?.let {
+                tariffs = it
+                isDataLoaded = true
+            }
+        }
+    }
+
+    fun refreshTariffInfo() {
+        isDataLoaded = false // Reset the flag to force data reload
+        loadTariffInfo(forceReload = true)
+    }
+
+    fun changeTariff(tariffId: Int) {
+        val context = getApplication<Application>().applicationContext
+        val tokenManager = TokenManager.getInstance(context)
+        val activeAccount = tokenManager.getActiveAccount()
+        val token = activeAccount?.let { tokenManager.getToken(it) }
+
+        if (token == null) {
+            tariffChangeMessage = "Пожалуйста, войдите снова."
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitInstance.api.setTariff("Bearer $token", tariffId)
+                }
+                if (response.isSuccessful) {
+                    tariffChangeMessage = "Тариф успешно изменен"
+                    isTariffChangeSuccessful = true
+                    loadTariffInfo()
+                } else {
+                    tariffChangeMessage = "Не удалось изменить тариф"
+                    Log.e("TariffViewModel", "Error changing tariff: ${response.errorBody()?.string()}")
+                    isTariffChangeSuccessful = false
+                }
+            } catch (e: Exception) {
+                tariffChangeMessage = "Ошибка при смене тарифа"
+                Log.e("TariffViewModel", "Error changing tariff", e)
+                isTariffChangeSuccessful = false
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun undoChangeTariff() {
+        val context = getApplication<Application>().applicationContext
+        val tokenManager = TokenManager.getInstance(context)
+        val activeAccount = tokenManager.getActiveAccount()
+        val token = activeAccount?.let { tokenManager.getToken(it) }
+
+        if (token == null) {
+            tariffChangeMessage = "Пожалуйста, войдите снова."
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitInstance.api.undoChangeTariff("Bearer $token")
+                }
+                if (response.isSuccessful) {
+                    tariffChangeMessage = "Смена тарифа отменена"
+                    isTariffChangeSuccessful = false
+                    loadTariffInfo()
+                } else {
+                    tariffChangeMessage = "Не удалось отменить смену тарифа"
+                    Log.e("TariffViewModel", "Error canceling tariff change: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                tariffChangeMessage = "Ошибка при отмене смены тарифа"
+                Log.e("TariffViewModel", "Error canceling tariff change", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun clearTariffChangeMessage() {
+        viewModelScope.launch {
+            tariffChangeMessage = null
+            isTariffChangeSuccessful = false
+        }
+    }
+}

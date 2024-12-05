@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.ittelekom.app">
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -36,6 +37,14 @@
         </activity>
         <activity
             android:name=".screens.SettingsActivity"
+            android:theme="@style/Theme.ITTelekom">
+        </activity>
+        <activity
+            android:name=".screens.settings.InfoActivity"
+            android:theme="@style/Theme.ITTelekom">
+        </activity>
+        <activity
+            android:name=".screens.settings.DisplayActivity"
             android:theme="@style/Theme.ITTelekom">
         </activity>
     </application>

@@ -4,15 +4,20 @@ plugins {
 }
 
 android {
-    namespace = "com.example.it_telekom_app"
+    namespace = "com.ittelekom.app"
     compileSdkVersion(rootProject.extra["compileSdkVersion"] as Int)
 
+
+    
     defaultConfig {
-        applicationId = "com.example.it_telekom_app"
+        applicationId = "com.ittelekom.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "0.1.0"
+        val version = "0.0.3"
+        val buildType = "Alpha"
+        val releaseDate = "2024-12-03"
+        versionName = "$buildType $version ($releaseDate)"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -61,6 +66,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.gson)
     implementation(libs.accompanist.systemuicontroller)
 
@@ -71,6 +77,7 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.generativeai)
+    implementation(libs.androidx.runtime.livedata)
 
     // Зависимости для тестирования
     testImplementation(libs.junit)
