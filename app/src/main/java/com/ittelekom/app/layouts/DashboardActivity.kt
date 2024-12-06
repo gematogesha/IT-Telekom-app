@@ -1,4 +1,4 @@
-package com.ittelekom.app.screens
+package com.ittelekom.app.layouts
 
 import android.content.Intent
 import android.os.Bundle
@@ -36,12 +36,17 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.ittelekom.app.layouts.home.HomeScreen
+import com.ittelekom.app.layouts.payment.PaymentScreen
+import com.ittelekom.app.layouts.profile.ProfileScreen
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.utils.TokenManager
+import com.ittelekom.app.viewmodels.AccountViewModel
 
 
 class DashboardActivity : ComponentActivity() {
@@ -81,6 +86,8 @@ class DashboardActivity : ComponentActivity() {
 fun DashboardScreen() {
     val navController = rememberNavController()
 
+    val viewModel: AccountViewModel = viewModel()
+
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
@@ -94,10 +101,10 @@ fun DashboardScreen() {
             popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) }
         ) {
             composable("home") {
-                HomeScreen()
+                HomeScreen(viewModel = viewModel)
             }
             composable("payment") {
-                PaymentScreen()
+                PaymentScreen(viewModel = viewModel)
             }
             composable("chat") {
                 ChatScreen()

@@ -1,4 +1,4 @@
-package com.ittelekom.app.screens
+package com.ittelekom.app.layouts.profile
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -46,6 +46,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ittelekom.app.layouts.LoginActivity
+import com.ittelekom.app.layouts.settings.SettingsActivity
 import com.ittelekom.app.network.RetrofitInstance
 import com.ittelekom.app.utils.TokenManager
 import kotlinx.coroutines.CoroutineScope

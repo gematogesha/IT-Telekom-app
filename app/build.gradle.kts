@@ -14,9 +14,9 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        val version = "0.0.3"
+        val version = "0.0.4"
         val buildType = "Alpha"
-        val releaseDate = "2024-12-03"
+        val releaseDate = "03.12.2024"
         versionName = "$buildType $version ($releaseDate)"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

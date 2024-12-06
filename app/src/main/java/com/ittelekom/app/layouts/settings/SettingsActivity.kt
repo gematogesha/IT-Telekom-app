@@ -1,24 +1,23 @@
-package com.ittelekom.app.screens.settings
+package com.ittelekom.app.layouts.settings
 
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -32,56 +31,73 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import com.ittelekom.app.R
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.ui.util.SetSystemBarsColor
 
-
-class InfoActivity : ComponentActivity() {
+class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             ITTelekomTheme {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
-                InfoScreen(onBackPressed = { finish() })
+                SettingsScreen(onBackPressed = { finish() })
             }
         }
     }
 }
 
+data class MenuItem(
+    val title: String,
+    val subtitle: String,
+    val icon: ImageVector,
+    val activityClass: Class<*>
+)
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InfoScreen(onBackPressed: () -> Unit) {
+fun SettingsScreen(onBackPressed: () -> Unit) {
 
     SetSystemBarsColor()
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val context = LocalContext.current
+    val context = LocalContext.current // Получаем контекст приложения
+
     val versionName = remember {
         try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.versionName
+            packageInfo.versionName?.replace("*", "")
         } catch (e: PackageManager.NameNotFoundException) {
             "Unknown"
         }
     }
 
+    val menuItems = listOf(
+        MenuItem(
+            title = "Отображение",
+            subtitle = "Secondary text",
+            icon = Icons.Outlined.Palette,
+            activityClass = DisplayActivity::class.java
+        ),
+        MenuItem(
+            title = "Информация",
+            subtitle = "ITTelekom $versionName",
+            icon = Icons.Outlined.Info,
+            activityClass = InfoActivity::class.java
+        )
+    )
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = {
-                    Text(text = "Информация", maxLines = 1, overflow = TextOverflow.Ellipsis)
-                },
+                title = { Text("Настройки", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
                         Icon(
@@ -92,61 +108,43 @@ fun InfoScreen(onBackPressed: () -> Unit) {
                 },
                 scrollBehavior = scrollBehavior
             )
-        }
-    ) { innerPadding ->
-        Surface(
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            LazyColumn(
-                contentPadding = innerPadding,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+        },
+        content = { innerPadding ->
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxSize(),
             ) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            modifier = Modifier
-                                .size(200.dp),
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                            tint = Color.Unspecified,
-                            contentDescription = "Logo"
-                        )
-                    }
-                    HorizontalDivider()
-                }
-                item {
-                    ListItem(
-                        headlineContent = { Text("Версия") },
-                        supportingContent = {
-                            if (versionName != null) {
-                                Text(versionName)
-                            }
-                        },
-                    )
-                }
-                item {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable(
-                                onClick = {
-                                    val intent =
-                                        Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://it-net.ru/home.html"))
-                                    context.startActivity(intent)
-                                },
-                            ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ListItem(
-                            headlineContent = { Text("Офицальный сайт") },
-                        )
+                LazyColumn(
+                    contentPadding = innerPadding,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(menuItems) { menuItem ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    onClick = {
+                                        val intent = Intent(context, menuItem.activityClass)
+                                        context.startActivity(intent)
+                                    },
+                                ),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ListItem(
+                                headlineContent = { Text(menuItem.title) },
+                                supportingContent = { Text(menuItem.subtitle) },
+                                leadingContent = {
+                                    Icon(
+                                        menuItem.icon,
+                                        contentDescription = "Info",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
-    }
+    )
 }

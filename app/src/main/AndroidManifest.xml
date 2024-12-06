@@ -17,7 +17,7 @@
         android:theme="@style/Theme.ITTelekom.Starting"
         tools:targetApi="31">
         <activity
-            android:name=".screens.LoginActivity"
+            android:name=".layouts.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.ITTelekom.Starting">
             <intent-filter>
@@ -27,24 +27,24 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".screens.DashboardActivity"
+            android:name=".layouts.DashboardActivity"
             android:theme="@style/Theme.ITTelekom"
             >
         </activity>
         <activity
-            android:name=".screens.ChangeTariffActivity"
+            android:name=".layouts.home.ChangeTariffActivity"
             android:theme="@style/Theme.ITTelekom">
         </activity>
         <activity
-            android:name=".screens.SettingsActivity"
+            android:name=".layouts.settings.SettingsActivity"
             android:theme="@style/Theme.ITTelekom">
         </activity>
         <activity
-            android:name=".screens.settings.InfoActivity"
+            android:name=".layouts.settings.InfoActivity"
             android:theme="@style/Theme.ITTelekom">
         </activity>
         <activity
-            android:name=".screens.settings.DisplayActivity"
+            android:name=".layouts.settings.DisplayActivity"
             android:theme="@style/Theme.ITTelekom">
         </activity>
     </application>

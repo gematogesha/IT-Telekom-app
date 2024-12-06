@@ -1,4 +1,4 @@
-package com.ittelekom.app.screens
+package com.ittelekom.app.layouts.home
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -35,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,37 +43,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ittelekom.app.components.PullRefresh
+import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.ui.util.AccountBalanceCard
-import com.ittelekom.app.ui.util.CardTop
+import com.ittelekom.app.ui.util.AccountSelectCard
 import com.ittelekom.app.utils.TokenManager
 import com.ittelekom.app.viewmodels.AccountViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun HomeScreen() {
+fun HomeScreen(viewModel: AccountViewModel) {
     val context = LocalContext.current
     val tokenManager = TokenManager.getInstance(context)
     val accounts = tokenManager.getAllAccounts().toList()
     var selectedAccount by remember { mutableStateOf(tokenManager.getActiveAccount()) }
-    val viewModel: AccountViewModel = viewModel()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Получаем значения через observeAsState
-    val accountInfo by viewModel.accountInfo.observeAsState()
-    val isLoading = viewModel.isLoading.observeAsState(false).value // исправлено
-    val errorMessage by viewModel.errorMessage.observeAsState()
-    val isRefreshing = viewModel.isRefreshing.observeAsState(false).value // исправлено
+    val accountInfo = viewModel.accountInfo
+    val isLoading = viewModel.isLoading
+    val errorMessage = viewModel.errorMessage
+    val isRefreshing = viewModel.isRefreshing
 
     LaunchedEffect(selectedAccount) {
         if (selectedAccount != null) {
             tokenManager.setActiveAccount(selectedAccount!!)
-            Log.d("HomeScreen", "Selected account: $isLoading")
             if (!isLoading) {
                 viewModel.loadAccountInfo()
-                Log.d("HomeScreen", "AccountInfo $accountInfo")
             }
         } else {
             val intent = Intent(context, LoginActivity::class.java)
@@ -84,11 +79,9 @@ fun HomeScreen() {
     }
 
     LaunchedEffect(errorMessage) {
-        errorMessage.let {
-            if (it != null) {
-                snackbarHostState.showSnackbar(it)
-            }
-            Log.e("HomeScreen", "Error: $it")
+        if (errorMessage != null) {
+            snackbarHostState.showSnackbar(errorMessage)
+            Log.e("HomeScreen", "Error: $errorMessage")
         }
     }
 
@@ -99,7 +92,7 @@ fun HomeScreen() {
                 refreshing = isRefreshing,
                 enabled = true,
                 onRefresh = {
-                    viewModel.refreshAccountInfo()
+                    viewModel.pullToRefreshAccountInfo()
                 },
                 modifier = Modifier.fillMaxSize(),
                 indicatorPadding = PaddingValues(16.dp)
@@ -113,12 +106,7 @@ fun HomeScreen() {
                             .fillMaxSize()
                             .padding(all = 16.dp)
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        } else if (accountInfo == null) {
+                        if (isLoading || accountInfo == null) {
                             CircularProgressIndicator(
                                 modifier = Modifier.align(Alignment.Center),
                                 color = MaterialTheme.colorScheme.primary
@@ -128,8 +116,9 @@ fun HomeScreen() {
                                 modifier = Modifier.fillMaxSize(),
                             ) {
                                 item {
-                                    CardTop(
-                                        info = accountInfo!!,
+                                    AccountSelectCard(
+                                        info = accountInfo,
+
                                         accounts = accounts,
                                         selectedAccount = selectedAccount,
                                         onAccountSelected = { account ->
@@ -137,8 +126,11 @@ fun HomeScreen() {
                                             viewModel.refreshAccountInfo()
                                         }
                                     )
-                                    AccountBalanceCard(accountInfo!!)
-                                    TariffCard(accountInfo!!)
+                                    AccountBalanceCard(
+                                        info = accountInfo,
+                                        showAddOpt = false
+                                    )
+                                    TariffCard(accountInfo)
                                 }
                             }
                         }

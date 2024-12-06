@@ -1,4 +1,4 @@
-package com.ittelekom.app.screens.settings
+package com.ittelekom.app.layouts.settings
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -114,7 +114,7 @@ fun DisplayScreen(onBackPressed: () -> Unit) {
                             Text(
                                 text = "Тема",
                                 color = MaterialTheme.colorScheme.primary,
-                                fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         },
                     )

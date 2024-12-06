@@ -1,4 +1,4 @@
-package com.ittelekom.app.screens
+package com.ittelekom.app.layouts
 
 import android.annotation.SuppressLint
 import android.content.Context

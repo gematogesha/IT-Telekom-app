@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import com.example.it_telekom_app.viewmodels.BaseViewModel
 import com.ittelekom.app.models.Tariffs
 import com.ittelekom.app.network.RetrofitInstance
 import com.ittelekom.app.utils.TokenManager
@@ -34,7 +35,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
         val token = activeAccount?.let { tokenManager.getToken(it) }
 
         if (token == null) {
-            _errorMessage.value = "Пожалуйста, войдите снова."
+            errorMessage = "Пожалуйста, войдите снова."
             return
         }
 
@@ -69,7 +70,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
         }
 
         viewModelScope.launch {
-            _isLoading.value = true
+            isLoading = true
             try {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitInstance.api.setTariff("Bearer $token", tariffId)
@@ -88,7 +89,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
                 Log.e("TariffViewModel", "Error changing tariff", e)
                 isTariffChangeSuccessful = false
             } finally {
-                _isLoading.value = false
+                isLoading = false
             }
         }
     }
@@ -105,7 +106,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
         }
 
         viewModelScope.launch {
-            _isLoading.value = true
+            isLoading = true
             try {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitInstance.api.undoChangeTariff("Bearer $token")
@@ -122,7 +123,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
                 tariffChangeMessage = "Ошибка при отмене смены тарифа"
                 Log.e("TariffViewModel", "Error canceling tariff change", e)
             } finally {
-                _isLoading.value = false
+                isLoading = false
             }
         }
     }

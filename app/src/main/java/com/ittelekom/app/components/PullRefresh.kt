@@ -1,5 +1,6 @@
 package com.ittelekom.app.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,7 +44,6 @@ fun PullRefresh(
             .fillMaxSize()
     ) {
         content()
-
         PullToRefreshDefaults.Indicator(
             modifier = Modifier
                 .align(Alignment.TopCenter)

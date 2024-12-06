@@ -1,9 +1,10 @@
 package com.ittelekom.app.viewmodels
 
 import android.app.Application
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.example.it_telekom_app.viewmodels.BaseViewModel
 import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.models.PayToDate
 import com.ittelekom.app.models.Services
@@ -11,16 +12,12 @@ import com.ittelekom.app.network.RetrofitInstance
 import com.ittelekom.app.utils.TokenManager
 
 class AccountViewModel(application: Application) : BaseViewModel(application) {
+    var accountInfo by mutableStateOf<AccountInfo?>(null)
+        private set
+    var isDataLoaded by mutableStateOf(false)
 
-    private val _accountInfo = MutableLiveData<AccountInfo?>(null)
-    val accountInfo: LiveData<AccountInfo?> = _accountInfo
-
-    private val _isDataLoaded = MutableLiveData(false)
-    val isDataLoaded: LiveData<Boolean> = _isDataLoaded
-
-    // Загрузка данных аккаунта
     fun loadAccountInfo(forceReload: Boolean = false) {
-        if (_isDataLoaded.value == true && !forceReload) {
+        if (isDataLoaded && !forceReload) {
             return
         }
 
@@ -30,7 +27,7 @@ class AccountViewModel(application: Application) : BaseViewModel(application) {
         val token = activeAccount?.let { tokenManager.getToken(it) }
 
         if (token == null) {
-            _errorMessage.value = "Пожалуйста, войдите снова."
+            errorMessage = "Пожалуйста, войдите снова."
             return
         }
 
@@ -46,19 +43,22 @@ class AccountViewModel(application: Application) : BaseViewModel(application) {
             val payToDateResponse = responses[1] as? PayToDate
             val servicesResponse = responses[2] as? Services
 
-            accountResponse?.let { account ->
-                account.payToDate = payToDateResponse
-                account.services = servicesResponse?.services ?: emptyList()
-                _accountInfo.postValue(account)
-                _isDataLoaded.postValue(true)
-                Log.d("AccountViewModel", "AccountInfo: $account")
+            accountResponse?.let {
+                it.payToDate = payToDateResponse
+                it.services = servicesResponse?.services ?: emptyList()
+                accountInfo = it
+                isDataLoaded = true // Set flag to true after data is loaded
             }
         }
     }
 
-    // Обновление данных аккаунта
     fun refreshAccountInfo() {
-        _isDataLoaded.postValue(false)
+        isDataLoaded = false // Reset the flag to force data reload
+        loadAccountInfo(forceReload = false)
+    }
+
+    fun pullToRefreshAccountInfo() {
+        isDataLoaded = false // Reset the flag to force data reload
         loadAccountInfo(forceReload = true)
     }
 }

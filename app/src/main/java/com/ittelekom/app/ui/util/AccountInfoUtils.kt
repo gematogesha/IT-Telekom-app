@@ -49,7 +49,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-fun CardTop(
+fun AccountSelectCard(
     info: AccountInfo,
     accounts: List<String>,
     selectedAccount: String?,
@@ -104,7 +104,7 @@ fun CardTop(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
-                            text = userAbbreviatedName ?: "Выберите аккаунт",
+                            text = userAbbreviatedName,
                             style = MaterialTheme.typography.bodyLarge,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurface
@@ -198,25 +198,32 @@ fun abbreviateName(fullName: String): String {
     return if (initials.isNotEmpty()) "$surname $initials" else surname
 }
 
+fun formattedPrice(price: String): String {
+    val balance = price.replace("\u00a0", "").replace("руб.", "").trim().toDoubleOrNull()
+
+    val formattedBalance = balance?.let {
+        val symbols = DecimalFormatSymbols(Locale.getDefault()).apply {
+            groupingSeparator = ' '
+        }
+        val decimalFormat = DecimalFormat("#,###", symbols)
+        "${decimalFormat.format(it)} \u20BD"
+    } ?: "0 \u20BD"
+
+    return formattedBalance
+}
+
 @Composable
-fun AccountBalanceCard(accountInfo: AccountInfo) {
+fun AccountBalanceCard(
+    info: AccountInfo,
+    showAddOpt: Boolean,
+) {
     val formatter = DateTimeFormatter.ofPattern("dd.MM")
     val current = LocalDateTime.now().format(formatter)
 
     val formatterDate = DateTimeFormatter.ofPattern("dd.MM.yyyy")
-    val payToDate = accountInfo.payToDate?.to_date?.let { LocalDate.parse(it, formatterDate) }
+    val payToDate = info.payToDate?.to_date?.let { LocalDate.parse(it, formatterDate) }
     val currentDate = LocalDate.now()
     val isPayToDateExpired = payToDate?.isBefore(currentDate) == true
-
-    val balance = accountInfo.balance.replace("\u00a0", "").replace("руб.", "").trim().toDoubleOrNull()
-
-    val formattedBalance = balance?.let {
-        val symbols = DecimalFormatSymbols(Locale.getDefault()).apply {
-            groupingSeparator = ' ' // Используем пробел в качестве разделителя
-        }
-        val decimalFormat = DecimalFormat("#,###", symbols)
-        "${decimalFormat.format(it)} \u20BD" // Добавляем символ рубля
-    } ?: "0 \u20BD"
 
     Card(
         modifier = Modifier
@@ -250,7 +257,7 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = accountInfo.num_dog,
+                        text = info.num_dog,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Normal,
                         color = MaterialTheme.colorScheme.onSurface
@@ -278,7 +285,7 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = ("до " + accountInfo.payToDate?.to_date) ?: "",
+                        text = ("до " + info.payToDate?.to_date),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.outline,
                         textAlign = TextAlign.Center
@@ -302,7 +309,7 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = formattedBalance,
+                        text = formattedPrice(info.balance),
                         style = MaterialTheme.typography.headlineLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -316,6 +323,31 @@ fun AccountBalanceCard(accountInfo: AccountInfo) {
                         .padding(12.dp),
                     tint = MaterialTheme.colorScheme.onSecondary
                 )
+            }
+            if (showAddOpt) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Рекомендуем к полате до ${info.payToDate?.to_date}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Normal,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = formattedPrice(info.services[0].svc_price),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                }
             }
         }
     }
