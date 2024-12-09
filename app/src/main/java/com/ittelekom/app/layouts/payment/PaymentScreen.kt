@@ -25,8 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.it_telekom_app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.layouts.LoginActivity
+import com.ittelekom.app.layouts.home.TariffCard
 import com.ittelekom.app.ui.util.AccountBalanceCard
 import com.ittelekom.app.ui.util.AccountSelectCard
 import com.ittelekom.app.utils.TokenManager
@@ -42,16 +44,14 @@ fun PaymentScreen(viewModel: AccountViewModel) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     val accountInfo = viewModel.accountInfo
-    val isLoading = viewModel.isLoading
     val errorMessage = viewModel.errorMessage
     val isRefreshing = viewModel.isRefreshing
+    val isLoading = viewModel.isLoading
 
     LaunchedEffect(selectedAccount) {
         if (selectedAccount != null) {
-            tokenManager.setActiveAccount(selectedAccount!!)
-            if (!isLoading) {
-                viewModel.loadAccountInfo()
-            }
+            TokenManager.getInstance(context).setActiveAccount(selectedAccount!!)
+            viewModel.loadAccountInfo()
         } else {
             val intent = Intent(context, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -87,16 +87,10 @@ fun PaymentScreen(viewModel: AccountViewModel) {
                             .fillMaxSize()
                             .padding(all = 16.dp)
                     ) {
-                        if (isLoading) {
+                        if (isLoading || accountInfo == null) {
                             CircularProgressIndicator(
                                 modifier = Modifier.align(Alignment.Center),
                                 color = MaterialTheme.colorScheme.primary
-                            )
-                        } else if (accountInfo == null) {
-                            Text(
-                                text = "Нет данных для отображения",
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.align(Alignment.Center)
                             )
                         } else {
                             LazyColumn(
@@ -105,6 +99,7 @@ fun PaymentScreen(viewModel: AccountViewModel) {
                                 item {
                                     AccountSelectCard(
                                         info = accountInfo,
+
                                         accounts = accounts,
                                         selectedAccount = selectedAccount,
                                         onAccountSelected = { account ->
@@ -114,7 +109,7 @@ fun PaymentScreen(viewModel: AccountViewModel) {
                                     )
                                     AccountBalanceCard(
                                         info = accountInfo,
-                                        showAddOpt = true
+                                        showAddOpt = false
                                     )
                                 }
                             }

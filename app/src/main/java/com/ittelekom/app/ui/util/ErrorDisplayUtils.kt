@@ -23,26 +23,31 @@ fun ErrorDisplay(
     iconTint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.inverseOnSurface,
     defaultErrorMessage: String = "Ошибка загрузки данных"
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
     ) {
-        Icon(
-            imageVector = getErrorIcon(errorMessage),
-            tint = iconTint,
-            contentDescription = "Error Icon",
-            modifier = Modifier
-                .size(iconSize)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = errorMessage ?: defaultErrorMessage,
-            style = textStyle,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        Column(
+            modifier = modifier
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = getErrorIcon(errorMessage),
+                tint = iconTint,
+                contentDescription = "Error Icon",
+                modifier = Modifier
+                    .size(iconSize)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = errorMessage ?: defaultErrorMessage,
+                style = textStyle,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
     }
 }
 

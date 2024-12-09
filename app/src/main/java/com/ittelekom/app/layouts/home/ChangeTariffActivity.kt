@@ -1,6 +1,5 @@
 package com.ittelekom.app.layouts.home
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -67,7 +66,6 @@ class ChangeTariffActivity : ComponentActivity() {
     }
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangeTariffScreen(onBackPressed: () -> Unit) {
@@ -76,22 +74,20 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
 
     val viewModel: TariffViewModel = viewModel()
     val accountViewModel: AccountViewModel = viewModel()
+
     val tariffs = viewModel.tariffs
-    val accountInfo = accountViewModel.accountInfo
-    val isLoading = viewModel.isLoading
-    val errorMessage = viewModel.errorMessage
-    val isRefreshing = viewModel.isRefreshing
     val snackbarHostState = remember { SnackbarHostState() }
     val tariffChangeMessage = viewModel.tariffChangeMessage
     val isTariffChangeSuccessful = viewModel.isTariffChangeSuccessful
 
+    val accountInfo = accountViewModel.accountInfo
+    val errorMessage = viewModel.errorMessage
+    val isRefreshing = viewModel.isRefreshing
+    val isLoading = viewModel.isLoading
+
     LaunchedEffect(Unit) {
-        if (viewModel.tariffs == null && !isLoading && !isRefreshing) {
-            viewModel.loadTariffInfo()
-        }
-        if (accountViewModel.accountInfo == null && !isLoading && !isRefreshing) {
-            accountViewModel.loadAccountInfo()
-        }
+        if (tariffs == null) viewModel.loadTariffInfo()
+        if (accountInfo == null) accountViewModel.loadAccountInfo()
     }
 
     LaunchedEffect(errorMessage) {
@@ -121,7 +117,11 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
         topBar = {
             TopAppBar(
                 title = {
-                    Text(text = "Изменить тариф", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        text = "Изменить тариф",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
@@ -139,12 +139,10 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
         PullRefresh(
             refreshing = isRefreshing,
             enabled = true,
-            onRefresh = {
-                viewModel.refreshTariffInfo()
-            },
+            onRefresh = { viewModel.pullToRefreshTariffInfo() },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
         ) {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
@@ -154,7 +152,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                     modifier = Modifier
                         .fillMaxSize()
                 ) {
-                    if (isLoading == true) {
+                    if (isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.align(Alignment.Center),
                             color = MaterialTheme.colorScheme.primary
@@ -207,7 +205,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                                 ) {
                                                     ListItem(
                                                         headlineContent = { Text(tariff.caption) },
-                                                        supportingContent = { Text("Скорость: ${formattedSpeed}, Абон. плата: ${formattedAbonplata}") },
+                                                        supportingContent = { Text("Скорость: $formattedSpeed, Абон. плата: $formattedAbonplata") },
                                                         leadingContent = {
                                                             RadioButton(
                                                                 selected = (tariff.caption == selectedOption),
@@ -258,3 +256,6 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
         }
     }
 }
+
+
+

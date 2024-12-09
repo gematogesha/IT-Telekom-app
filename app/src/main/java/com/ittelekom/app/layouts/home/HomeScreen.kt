@@ -48,6 +48,7 @@ import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.ui.util.AccountBalanceCard
 import com.ittelekom.app.ui.util.AccountSelectCard
+import com.ittelekom.app.ui.util.CustomLoadingIndicator
 import com.ittelekom.app.utils.TokenManager
 import com.ittelekom.app.viewmodels.AccountViewModel
 
@@ -61,16 +62,14 @@ fun HomeScreen(viewModel: AccountViewModel) {
     val snackbarHostState = remember { SnackbarHostState() }
 
     val accountInfo = viewModel.accountInfo
-    val isLoading = viewModel.isLoading
     val errorMessage = viewModel.errorMessage
     val isRefreshing = viewModel.isRefreshing
+    val isLoading = viewModel.isLoading
 
     LaunchedEffect(selectedAccount) {
         if (selectedAccount != null) {
-            tokenManager.setActiveAccount(selectedAccount!!)
-            if (!isLoading) {
-                viewModel.loadAccountInfo()
-            }
+            TokenManager.getInstance(context).setActiveAccount(selectedAccount!!)
+            viewModel.loadAccountInfo()
         } else {
             val intent = Intent(context, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -107,10 +106,7 @@ fun HomeScreen(viewModel: AccountViewModel) {
                             .padding(all = 16.dp)
                     ) {
                         if (isLoading || accountInfo == null) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center),
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            CustomLoadingIndicator()
                         } else {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
@@ -196,14 +192,14 @@ fun TariffCard(info: AccountInfo) {
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceAround
+                    horizontalArrangement = Arrangement.SpaceBetween
+
                 ) {
                     Text(
                         text = it.svc_descr.substringAfter("Скорость(до...): ")
                             .substringAfter(": ").removeSuffix(".").trim(),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
-
                     )
                     // Дополнительные услуги
                     if (additionalServices.isNotEmpty()) {

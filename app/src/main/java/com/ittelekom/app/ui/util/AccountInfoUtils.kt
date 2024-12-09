@@ -199,7 +199,7 @@ fun abbreviateName(fullName: String): String {
 }
 
 fun formattedPrice(price: String): String {
-    val balance = price.replace("\u00a0", "").replace("руб.", "").trim().toDoubleOrNull()
+    val balance = price.replace("Цена: ", "").replace("\u00a0", "").replace("руб.", "").trim().toDoubleOrNull()
 
     val formattedBalance = balance?.let {
         val symbols = DecimalFormatSymbols(Locale.getDefault()).apply {
@@ -335,16 +335,19 @@ fun AccountBalanceCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
+                        modifier = Modifier.weight(2F),
                         text = "Рекомендуем к полате до ${info.payToDate?.to_date}",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
                     Text(
+                        modifier = Modifier.weight(1F),
                         text = formattedPrice(info.services[0].svc_price),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.End
                     )
 
                 }

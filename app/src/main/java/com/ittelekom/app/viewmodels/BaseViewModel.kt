@@ -22,44 +22,32 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
     var isRefreshing by mutableStateOf(false)
         protected set
     var errorMessage by mutableStateOf<String?>(null)
-        protected set
+        private set
 
     protected fun fetchData(
         isInitialLoad: Boolean,
         requests: List<suspend () -> Response<out Any>>,
         onSuccess: (List<Any?>) -> Unit
     ) {
-        val context = getApplication<Application>().applicationContext
-
-        if (!isInternetAvailable(context)) {
-            errorMessage = "Нет подключения к интернету"
-            return
-        }
-
-        val tokenManager = TokenManager.getInstance(context)
-        val activeAccount = tokenManager.getActiveAccount()
-        val token = activeAccount?.let { tokenManager.getToken(it) }
-
-        if (token == null) {
-            errorMessage = "Пожалуйста, войдите снова."
+        if (!isInternetAvailable()) {
+            setError("Нет подключения к интернету")
             return
         }
 
         viewModelScope.launch {
-            // Сбросить сообщение об ошибке перед началом нового запроса
-            errorMessage = null
+            resetError()
 
             if (isInitialLoad) isLoading = true else isRefreshing = true
-            Log.d("BaseViewModel", "Loading = $isLoading\n Refreshing - $isRefreshing")
+
             try {
                 val responses = withContext(Dispatchers.IO) {
                     requests.map { it() }
                 }
+                Log.d("Base", "Response - $responses")
                 if (responses.all { it.isSuccessful }) {
                     onSuccess(responses.map { it.body() })
-                    errorMessage = null
                 } else {
-                    errorMessage = "Ошибка загрузки данных"
+                    setError("Ошибка загрузки данных")
                 }
             } catch (e: Exception) {
                 Log.e("BaseViewModel", "Error executing requests", e)
@@ -70,12 +58,27 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    private fun isInternetAvailable(context: Context): Boolean {
+    private fun isInternetAvailable(): Boolean {
         val connectivityManager =
-            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            getApplication<Application>().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork ?: return false
         val networkCapabilities =
             connectivityManager.getNetworkCapabilities(network) ?: return false
         return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    fun getToken(): String? {
+        val context = getApplication<Application>().applicationContext
+        val tokenManager = TokenManager.getInstance(context)
+        val activeAccount = tokenManager.getActiveAccount()
+        return activeAccount?.let { tokenManager.getToken(it) }
+    }
+
+    private fun setError(message: String) {
+        errorMessage = message
+    }
+
+    private fun resetError() {
+        errorMessage = null
     }
 }
