@@ -18,11 +18,17 @@ class AccountViewModel(application: Application) : BaseViewModel(application) {
     var isDataLoaded by mutableStateOf(false)
         private set
 
-    fun loadAccountInfo(forceReload: Boolean = false) {
-        if (isDataLoaded && !forceReload) return
+    //TODO: Исправить двойную загрузку
+
+    fun loadAccountInfo(state: State) {
+        if (isDataLoaded && state != State.REFRESHING) return
+        if (isDataLoaded && state != State.LOADING_ITEM) return
+
+        Log.d("SSSSSSSSSSS", "SSSSSSSSSSSSSSS")
+
 
         fetchData(
-            isInitialLoad = !forceReload,
+            state = state,
             requests = listOf(
                 { RetrofitInstance.api.getAccountInfo("Bearer ${getToken()}") },
                 { RetrofitInstance.api.getPayToDate("Bearer ${getToken()}") },
@@ -45,11 +51,11 @@ class AccountViewModel(application: Application) : BaseViewModel(application) {
 
     fun refreshAccountInfo() {
         isDataLoaded = false // Reset the flag to force data reload
-        loadAccountInfo(forceReload = false)
+        loadAccountInfo(state = State.LOADING)
     }
 
     fun pullToRefreshAccountInfo() {
         isDataLoaded = false // Reset the flag to force data reload
-        loadAccountInfo(forceReload = true)
+        loadAccountInfo(state = State.REFRESHING)
     }
 }

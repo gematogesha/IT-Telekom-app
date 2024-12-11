@@ -87,7 +87,9 @@ fun SettingsScreen(onBackPressed: () -> Unit) {
         ),
         MenuItem(
             title = "Информация",
-            subtitle = "ITTelekom $versionName",
+            subtitle = "ITTelekom ${
+                versionName?.replace(Regex("\\(\\d{2}\\.\\d{2}\\.\\d{4}\\)\$"), "")?.trim()
+            }",
             icon = Icons.Outlined.Info,
             activityClass = InfoActivity::class.java
         )

@@ -8,24 +8,22 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.it_telekom_app.viewmodels.BaseViewModel
+import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.layouts.home.TariffCard
@@ -45,13 +43,19 @@ fun PaymentScreen(viewModel: AccountViewModel) {
 
     val accountInfo = viewModel.accountInfo
     val errorMessage = viewModel.errorMessage
-    val isRefreshing = viewModel.isRefreshing
-    val isLoading = viewModel.isLoading
+    val isRefreshing = viewModel.isRefreshingState()
+    val isLoading = viewModel.isLoadingState()
+    var isInitialLoad by remember { mutableStateOf(true) }
 
     LaunchedEffect(selectedAccount) {
         if (selectedAccount != null) {
             TokenManager.getInstance(context).setActiveAccount(selectedAccount!!)
-            viewModel.loadAccountInfo()
+            if (isInitialLoad) {
+                viewModel.loadAccountInfo(BaseViewModel.State.LOADING)
+                isInitialLoad = false
+            } else {
+                viewModel.refreshAccountInfo()
+            }
         } else {
             val intent = Intent(context, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -88,10 +92,7 @@ fun PaymentScreen(viewModel: AccountViewModel) {
                             .padding(all = 16.dp)
                     ) {
                         if (isLoading || accountInfo == null) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.align(Alignment.Center),
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            CustomLoadingIndicator()
                         } else {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
@@ -99,17 +100,17 @@ fun PaymentScreen(viewModel: AccountViewModel) {
                                 item {
                                     AccountSelectCard(
                                         info = accountInfo,
-
                                         accounts = accounts,
                                         selectedAccount = selectedAccount,
                                         onAccountSelected = { account ->
                                             selectedAccount = account
-                                            viewModel.refreshAccountInfo()
                                         }
                                     )
+                                }
+                                item {
                                     AccountBalanceCard(
                                         info = accountInfo,
-                                        showAddOpt = false
+                                        showAddOpt = true
                                     )
                                 }
                             }

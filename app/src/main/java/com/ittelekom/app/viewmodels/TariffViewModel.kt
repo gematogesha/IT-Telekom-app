@@ -18,11 +18,12 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
     var isDataLoaded by mutableStateOf(false)
         private set
 
-    fun loadTariffInfo(forceReload: Boolean = false) {
-        if (isDataLoaded && !forceReload) return
+    fun loadTariffInfo(state: State) {
+        if (isDataLoaded && state != State.REFRESHING) return
+        if (isDataLoaded && state != State.LOADING_ITEM) return
 
         fetchData(
-            isInitialLoad = !forceReload,
+            state = state,
             requests = listOf(
                 { RetrofitInstance.api.getTariffs("Bearer ${getToken()}") }
             )
@@ -36,17 +37,17 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
 
     fun refreshTariffInfo() {
         isDataLoaded = false // Reset the flag to force data reload
-        loadTariffInfo(forceReload = false)
+        loadTariffInfo(state = State.LOADING)
     }
 
     fun pullToRefreshTariffInfo() {
         isDataLoaded = false // Reset the flag to force data reload
-        loadTariffInfo(forceReload = true)
+        loadTariffInfo(state = State.REFRESHING)
     }
 
     fun changeTariff(tariffId: Int) {
         fetchData(
-            isInitialLoad = false,
+            state = State.LOADING_ITEM,
             requests = listOf(
                 { RetrofitInstance.api.setTariff("Bearer ${getToken()}", tariffId) }
             )
@@ -55,7 +56,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
             if (response != null) {
                 tariffChangeMessage = "Тариф успешно изменен"
                 isTariffChangeSuccessful = true
-                loadTariffInfo() // Обновляем данные после смены тарифа
+                loadTariffInfo(State.IDLE) // Обновляем данные после смены тарифа
             } else {
                 tariffChangeMessage = "Не удалось изменить тариф"
                 isTariffChangeSuccessful = false
@@ -65,7 +66,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
 
     fun undoChangeTariff() {
         fetchData(
-            isInitialLoad = false,
+            state = State.LOADING_ITEM,
             requests = listOf(
                 { RetrofitInstance.api.undoChangeTariff("Bearer ${getToken()}") }
             )
@@ -74,7 +75,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
             if (response != null) {
                 tariffChangeMessage = "Смена тарифа отменена"
                 isTariffChangeSuccessful = false
-                loadTariffInfo() // Обновляем тарифы после отмены смены
+                loadTariffInfo(State.IDLE) // Обновляем тарифы после отмены смены
             } else {
                 tariffChangeMessage = "Не удалось отменить смену тарифа"
             }

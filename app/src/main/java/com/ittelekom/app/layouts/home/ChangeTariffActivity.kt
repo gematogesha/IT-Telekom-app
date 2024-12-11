@@ -16,7 +16,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +44,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.it_telekom_app.viewmodels.BaseViewModel
+import com.ittelekom.app.components.ButtonLoadingIndicator
+import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.ui.util.ErrorDisplay
@@ -82,12 +84,13 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
 
     val accountInfo = accountViewModel.accountInfo
     val errorMessage = viewModel.errorMessage
-    val isRefreshing = viewModel.isRefreshing
-    val isLoading = viewModel.isLoading
+    val isRefreshing = viewModel.isRefreshingState()
+    val isLoading = viewModel.isLoadingState()
+    val isLoadingItem = viewModel.isLoadingItemState()
 
     LaunchedEffect(Unit) {
-        if (tariffs == null) viewModel.loadTariffInfo()
-        if (accountInfo == null) accountViewModel.loadAccountInfo()
+        if (tariffs == null) viewModel.loadTariffInfo(BaseViewModel.State.LOADING)
+        if (accountInfo == null) accountViewModel.loadAccountInfo(BaseViewModel.State.LOADING)
     }
 
     LaunchedEffect(errorMessage) {
@@ -153,10 +156,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                         .fillMaxSize()
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        CustomLoadingIndicator()
                     } else {
                         if (tariffs != null && accountInfo != null) {
                             val tariffsList = tariffs.tariffs
@@ -224,16 +224,24 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                             Button(
                                                 modifier = Modifier
                                                     .fillMaxWidth(),
+                                                enabled = !isLoadingItem,
                                                 onClick = {
                                                     tariffsList.find { it.caption == selectedOption }
                                                         ?.let { selectedTariff ->
-                                                            viewModel.changeTariff(selectedTariff.id)
+                                                            viewModel.changeTariff(
+                                                                selectedTariff.id
+                                                            )
                                                         }
                                                 },
                                             ) {
-                                                Text(
-                                                    text = "Сменить тариф",
-                                                )
+                                                if(isLoadingItem) {
+                                                    ButtonLoadingIndicator()
+                                                } else {
+                                                    Text(
+                                                        text = "Сменить тариф",
+                                                    )
+                                                }
+
                                             }
                                         }
                                     } else {

@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,12 +42,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.it_telekom_app.viewmodels.BaseViewModel
+import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.ui.util.AccountBalanceCard
 import com.ittelekom.app.ui.util.AccountSelectCard
-import com.ittelekom.app.ui.util.CustomLoadingIndicator
 import com.ittelekom.app.utils.TokenManager
 import com.ittelekom.app.viewmodels.AccountViewModel
 
@@ -63,13 +63,19 @@ fun HomeScreen(viewModel: AccountViewModel) {
 
     val accountInfo = viewModel.accountInfo
     val errorMessage = viewModel.errorMessage
-    val isRefreshing = viewModel.isRefreshing
-    val isLoading = viewModel.isLoading
+    val isRefreshing = viewModel.isRefreshingState()
+    val isLoading = viewModel.isLoadingState()
+    var isInitialLoad by remember { mutableStateOf(true) }
 
     LaunchedEffect(selectedAccount) {
         if (selectedAccount != null) {
             TokenManager.getInstance(context).setActiveAccount(selectedAccount!!)
-            viewModel.loadAccountInfo()
+            if (isInitialLoad) {
+                viewModel.loadAccountInfo(BaseViewModel.State.LOADING)
+                isInitialLoad = false
+            } else {
+                viewModel.refreshAccountInfo()
+            }
         } else {
             val intent = Intent(context, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -114,18 +120,20 @@ fun HomeScreen(viewModel: AccountViewModel) {
                                 item {
                                     AccountSelectCard(
                                         info = accountInfo,
-
                                         accounts = accounts,
                                         selectedAccount = selectedAccount,
                                         onAccountSelected = { account ->
                                             selectedAccount = account
-                                            viewModel.refreshAccountInfo()
                                         }
                                     )
+                                }
+                                item {
                                     AccountBalanceCard(
                                         info = accountInfo,
                                         showAddOpt = false
                                     )
+                                }
+                                item {
                                     TariffCard(accountInfo)
                                 }
                             }
@@ -136,8 +144,6 @@ fun HomeScreen(viewModel: AccountViewModel) {
         }
     )
 }
-
-
 
 @Composable
 fun TariffCard(info: AccountInfo) {

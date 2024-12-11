@@ -4,8 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -95,10 +96,10 @@ fun DashboardScreen() {
             navController = navController,
             startDestination = "home",
             modifier = Modifier.padding(innerPadding),
-            enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) },
-            exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(300)) },
-            popEnterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) },
-            popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) }
+            enterTransition = {fadeIn(animationSpec = tween(200))},
+            exitTransition = {fadeOut(animationSpec = tween(200))},
+            popEnterTransition = {fadeIn(animationSpec = tween(200))},
+            popExitTransition = {fadeOut(animationSpec = tween(200))}
         ) {
             composable("home") {
                 HomeScreen(viewModel = viewModel)

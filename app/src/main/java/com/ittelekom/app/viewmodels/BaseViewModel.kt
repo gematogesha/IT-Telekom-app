@@ -16,16 +16,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Response
 
+
 abstract class BaseViewModel(application: Application) : AndroidViewModel(application) {
-    var isLoading by mutableStateOf(false)
-        protected set
-    var isRefreshing by mutableStateOf(false)
-        protected set
+    // Текущее состояние
+    var currentState by mutableStateOf(State.IDLE)
+        private set
+
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
     protected fun fetchData(
-        isInitialLoad: Boolean,
+        state: State,
         requests: List<suspend () -> Response<out Any>>,
         onSuccess: (List<Any?>) -> Unit
     ) {
@@ -34,16 +35,16 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
             return
         }
 
+        currentState = state
+
         viewModelScope.launch {
             resetError()
-
-            if (isInitialLoad) isLoading = true else isRefreshing = true
 
             try {
                 val responses = withContext(Dispatchers.IO) {
                     requests.map { it() }
                 }
-                Log.d("Base", "Response - $responses")
+
                 if (responses.all { it.isSuccessful }) {
                     onSuccess(responses.map { it.body() })
                 } else {
@@ -51,9 +52,9 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
                 }
             } catch (e: Exception) {
                 Log.e("BaseViewModel", "Error executing requests", e)
-                errorMessage = "Ошибка загрузки данных"
+                setError("Ошибка загрузки данных")
             } finally {
-                if (isInitialLoad) isLoading = false else isRefreshing = false
+                currentState = State.IDLE
             }
         }
     }
@@ -66,6 +67,8 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
             connectivityManager.getNetworkCapabilities(network) ?: return false
         return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
+
+    //TODO: Тут загружается старый аккаунт
 
     fun getToken(): String? {
         val context = getApplication<Application>().applicationContext
@@ -81,4 +84,16 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
     private fun resetError() {
         errorMessage = null
     }
+
+    enum class State {
+        IDLE,
+        LOADING,
+        LOADING_ITEM,
+        REFRESHING
+    }
+
+    fun isIdleState(): Boolean = currentState == State.IDLE
+    fun isLoadingState(): Boolean = currentState == State.LOADING
+    fun isLoadingItemState(): Boolean = currentState == State.LOADING_ITEM
+    fun isRefreshingState(): Boolean = currentState == State.REFRESHING
 }
