@@ -1,6 +1,8 @@
 package com.ittelekom.app.layouts.settings
 
+import ThemeManager
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,28 +31,38 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.ittelekom.app.ui.theme.ITTelekomTheme
-import com.ittelekom.app.ui.util.SetSystemBarsColor
 
 class DisplayActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            ITTelekomTheme {
+            val selectedTheme = rememberSaveable { mutableStateOf("system") }
+            val context = applicationContext
+
+            // Загрузить тему из настроек
+            val sharedPreferences =
+                context.getSharedPreferences("app_preferences", Context.MODE_PRIVATE)
+            selectedTheme.value = sharedPreferences.getString("theme", "system") ?: "system"
+
+            ITTelekomTheme(window = window) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
-                DisplayScreen(onBackPressed = { finish() })
+                DisplayScreen(
+                    onBackPressed = { finish() },
+                    onThemeChange = { newTheme ->
+                        ThemeManager.saveTheme(applicationContext, newTheme)
+                    }
+                )
             }
         }
     }
@@ -59,32 +71,30 @@ class DisplayActivity : ComponentActivity() {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DisplayScreen(onBackPressed: () -> Unit) {
-
-    SetSystemBarsColor()
-
-    val themeOptions = listOf("Светлая", "Тёмная", "Системная")
-    val selectedTheme = remember { mutableStateOf(themeOptions[0]) }
+fun DisplayScreen(
+    onBackPressed: () -> Unit,
+    onThemeChange: (String) -> Unit
+) {
     val openDialogTheme = remember { mutableStateOf(false) }
 
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val themeNameMap = mapOf(
+        "light" to "Светлая",
+        "dark" to "Тёмная",
+        "system" to "Системная"
+    )
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = {
-                    Text(text = "Информация", maxLines = 1, overflow = TextOverflow.Ellipsis)
-                },
+                title = { Text("Информация") },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Назад"
                         )
                     }
-                },
-                scrollBehavior = scrollBehavior
+                }
             )
         }
     ) { innerPadding ->
@@ -94,15 +104,15 @@ fun DisplayScreen(onBackPressed: () -> Unit) {
         ) {
             if (openDialogTheme.value) {
                 DialogTheme(
-                    themeOptions = themeOptions,
-                    selectedTheme = selectedTheme.value,
+                    selectedTheme = ThemeManager.currentTheme.value,
                     onOptionSelected = { newTheme ->
-                        selectedTheme.value = newTheme
+                        onThemeChange(newTheme)
                         openDialogTheme.value = false
                     },
                     onDismissRequest = { openDialogTheme.value = false }
                 )
             }
+
             LazyColumn(
                 contentPadding = innerPadding,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -113,10 +123,9 @@ fun DisplayScreen(onBackPressed: () -> Unit) {
                         headlineContent = {
                             Text(
                                 text = "Тема",
-                                color = MaterialTheme.colorScheme.primary,
-                                style = MaterialTheme.typography.bodyMedium
+                                color = MaterialTheme.colorScheme.primary
                             )
-                        },
+                        }
                     )
                 }
                 item {
@@ -128,7 +137,9 @@ fun DisplayScreen(onBackPressed: () -> Unit) {
                     ) {
                         ListItem(
                             headlineContent = { Text("Текущая тема") },
-                            supportingContent = { Text(selectedTheme.value) },
+                            supportingContent = {
+                                Text(themeNameMap[ThemeManager.currentTheme.value] ?: "Системная")
+                            },
                         )
                     }
                 }
@@ -137,37 +148,40 @@ fun DisplayScreen(onBackPressed: () -> Unit) {
     }
 }
 
-// TODO: Реализовать выбор темы
-
 @Composable
 fun DialogTheme(
-    themeOptions: List<String>,
     selectedTheme: String,
     onOptionSelected: (String) -> Unit,
     onDismissRequest: () -> Unit
 ) {
+    val themeMap = mapOf(
+        "light" to "Светлая",
+        "dark" to "Тёмная",
+        "system" to "Системная"
+    )
+
     AlertDialog(
         text = {
             Column(Modifier.selectableGroup()) {
-                themeOptions.forEach { theme ->
+                themeMap.forEach { (key, value) ->
                     Row(
                         Modifier
                             .fillMaxWidth()
                             .height(56.dp)
                             .selectable(
-                                selected = (theme == selectedTheme),
-                                onClick = { onOptionSelected(theme) },
+                                selected = (key == selectedTheme),
+                                onClick = { onOptionSelected(key) },
                                 role = Role.RadioButton
                             )
                             .padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(
-                            selected = (theme == selectedTheme),
+                            selected = (key == selectedTheme),
                             onClick = null
                         )
                         Text(
-                            text = theme,
+                            text = value,
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.padding(start = 16.dp)
                         )
@@ -175,10 +189,10 @@ fun DialogTheme(
                 }
             }
         },
-        onDismissRequest = { onDismissRequest() },
+        onDismissRequest = onDismissRequest,
         confirmButton = {
-            TextButton(onClick = { onDismissRequest() }) {
-                Text("Close")
+            TextButton(onClick = onDismissRequest) {
+                Text("Закрыть")
             }
         },
     )

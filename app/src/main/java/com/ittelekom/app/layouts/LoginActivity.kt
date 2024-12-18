@@ -57,6 +57,7 @@ import kotlinx.coroutines.withContext
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ThemeManager.loadTheme(this)
 
         var showSplashScreen = true
         val isAddingAccount = intent.getBooleanExtra("isAddingAccount", false)
@@ -85,7 +86,7 @@ class LoginActivity : ComponentActivity() {
         }
 
         setContent {
-            LoginActivityTheme {
+            LoginActivityTheme(window = window) {
                 window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
                 window.navigationBarColor = MaterialTheme.colorScheme.surface.toArgb()
                 LoginScreen()
@@ -176,7 +177,6 @@ fun LoginScreen() {
                             CoroutineScope(Dispatchers.IO).launch {
                                 try {
                                     val response = RetrofitInstance.api.login(login, password)
-                                    Log.d("Responce", response.body().toString())
                                     if (response.isSuccessful && response.body() != null) {
                                         val token = response.body()!!.string().trim()
                                         saveToken(context, login, token)

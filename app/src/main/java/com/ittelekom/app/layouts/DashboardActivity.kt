@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -29,7 +30,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
@@ -63,18 +66,7 @@ class DashboardActivity : ComponentActivity() {
         } else {
 
             setContent {
-                ITTelekomTheme {
-                    window.statusBarColor = MaterialTheme.colorScheme.surface.toArgb()
-                    window.navigationBarColor = MaterialTheme.colorScheme.surfaceContainer.toArgb()
-
-                    val isLightBackground = MaterialTheme.colorScheme.surface.luminance() > 0.5f
-                    val isLightNavBackground =
-                        MaterialTheme.colorScheme.surfaceContainer.luminance() > 0.5f
-                    val windowInsetsController =
-                        WindowInsetsControllerCompat(window, window.decorView)
-                    windowInsetsController.isAppearanceLightStatusBars = isLightBackground
-                    windowInsetsController.isAppearanceLightNavigationBars = isLightNavBackground
-
+                ITTelekomTheme(window = window) {
                     DashboardScreen()
 
                 }
@@ -166,10 +158,15 @@ fun BottomNavigationBar(navController: NavHostController) {
 
 @Composable
 fun ChatScreen() {
-    Text("Chat Screen", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+
+    ) {  }
+    Text("В разработке", fontSize = 20.sp)
 }
 
 @Composable
 fun StatisticsScreen() {
-    Text("Statistics Screen", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
+    Text("В разработке", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
 }

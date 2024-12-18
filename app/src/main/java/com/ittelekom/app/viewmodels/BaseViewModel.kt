@@ -45,9 +45,12 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
                     requests.map { it() }
                 }
 
+                Log.d("BaseViewModel", "Responses: $responses")
+
                 if (responses.all { it.isSuccessful }) {
                     onSuccess(responses.map { it.body() })
                 } else {
+                    Log.e("BaseViewModel", "Error: ${responses.firstOrNull { !it.isSuccessful }}")
                     setError("Ошибка загрузки данных")
                 }
             } catch (e: Exception) {
@@ -67,8 +70,6 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
             connectivityManager.getNetworkCapabilities(network) ?: return false
         return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
-
-    //TODO: Тут загружается старый аккаунт
 
     fun getToken(): String? {
         val context = getApplication<Application>().applicationContext

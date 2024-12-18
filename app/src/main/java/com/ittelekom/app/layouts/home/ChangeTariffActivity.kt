@@ -50,7 +50,6 @@ import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.ui.util.ErrorDisplay
-import com.ittelekom.app.ui.util.SetSystemBarsColor
 import com.ittelekom.app.viewmodels.AccountViewModel
 import com.ittelekom.app.viewmodels.TariffViewModel
 import java.text.NumberFormat
@@ -60,7 +59,7 @@ class ChangeTariffActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ITTelekomTheme {
+            ITTelekomTheme(window = window) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 ChangeTariffScreen(onBackPressed = { finish() })
             }
@@ -71,8 +70,6 @@ class ChangeTariffActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangeTariffScreen(onBackPressed: () -> Unit) {
-
-    SetSystemBarsColor()
 
     val viewModel: TariffViewModel = viewModel()
     val accountViewModel: AccountViewModel = viewModel()

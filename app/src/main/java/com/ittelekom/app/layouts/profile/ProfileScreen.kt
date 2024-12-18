@@ -61,10 +61,6 @@ import kotlinx.coroutines.withContext
 fun ProfileScreen() {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-    var isLoggingOut by remember { mutableStateOf(false) }
-
-    val tokenManager = TokenManager.getInstance(context)
-    val activeAccount = tokenManager.getActiveAccount()
 
     var expanded by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -105,7 +101,26 @@ fun ProfileScreen() {
                     onDismissRequest = { expanded = false },
                 ) {
                     DropdownMenuItem(
-                        modifier = Modifier.width(200.dp),
+                        //modifier = Modifier.width(200.dp),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Rounded.ManageAccounts,
+                                contentDescription = "Account Manager",
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = "Управление аккаунтом",
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            val intent = Intent(context, ProfileManagerActivity()::class.java)
+                            context.startActivity(intent)
+                        }
+                    )
+                    DropdownMenuItem(
+                        //modifier = Modifier.width(200.dp),
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Rounded.Settings,
@@ -120,25 +135,6 @@ fun ProfileScreen() {
                         onClick = {
                             expanded = false
                             val intent = Intent(context, SettingsActivity::class.java)
-                            context.startActivity(intent)
-                        }
-                    )
-                    DropdownMenuItem(
-                        modifier = Modifier.width(200.dp),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.ManageAccounts,
-                                contentDescription = "Account Manager",
-                            )
-                        },
-                        text = {
-                            Text(
-                                text = "Управление аккаунтами",
-                            )
-                        },
-                        onClick = {
-                            expanded = false
-                            val intent = Intent(context, ProfileManagerActivity()::class.java)
                             context.startActivity(intent)
                         }
                     )

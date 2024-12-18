@@ -38,13 +38,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.ittelekom.app.ui.theme.ITTelekomTheme
-import com.ittelekom.app.ui.util.SetSystemBarsColor
 
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ITTelekomTheme {
+            ITTelekomTheme(window = window) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 SettingsScreen(onBackPressed = { finish() })
             }
@@ -63,8 +62,6 @@ data class MenuItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(onBackPressed: () -> Unit) {
-
-    SetSystemBarsColor()
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val context = LocalContext.current // Получаем контекст приложения

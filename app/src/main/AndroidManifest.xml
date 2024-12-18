@@ -18,13 +18,20 @@
         android:enableOnBackInvokedCallback="true"
         tools:targetApi="31"
         tools:ignore="UnusedAttribute">
+
+
+        <activity
+            android:name=".layouts.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.ITTelekom.Starting">
+        </activity>
+
         <activity
             android:name=".layouts.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.ITTelekom.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

@@ -41,10 +41,11 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<Tariffs>
 
+    @FormUrlEncoded
     @POST("accounts/change_tariff")
     suspend fun setTariff(
         @Header("Authorization") token: String,
-        @Body tariffId: Int
+        @Field("new_tariff_id") tariffId: Int
     ): Response<Unit>
 
     @POST("accounts/undo_change_tariff")

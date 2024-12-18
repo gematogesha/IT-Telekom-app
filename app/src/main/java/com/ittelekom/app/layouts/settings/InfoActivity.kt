@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.ittelekom.app.R
 import com.ittelekom.app.ui.theme.ITTelekomTheme
-import com.ittelekom.app.ui.util.SetSystemBarsColor
 
 
 class InfoActivity : ComponentActivity() {
@@ -49,7 +48,7 @@ class InfoActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            ITTelekomTheme {
+            ITTelekomTheme(window = window) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 InfoScreen(onBackPressed = { finish() })
             }
@@ -61,8 +60,6 @@ class InfoActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InfoScreen(onBackPressed: () -> Unit) {
-
-    SetSystemBarsColor()
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val context = LocalContext.current

@@ -18,14 +18,9 @@ class AccountViewModel(application: Application) : BaseViewModel(application) {
     var isDataLoaded by mutableStateOf(false)
         private set
 
-    //TODO: Исправить двойную загрузку
-
     fun loadAccountInfo(state: State) {
         if (isDataLoaded && state != State.REFRESHING) return
         if (isDataLoaded && state != State.LOADING_ITEM) return
-
-        Log.d("SSSSSSSSSSS", "SSSSSSSSSSSSSSS")
-
 
         fetchData(
             state = state,

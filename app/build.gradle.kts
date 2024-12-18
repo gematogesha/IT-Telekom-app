@@ -75,6 +75,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.storage)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.core.splashscreen)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.generativeai)
     implementation(libs.androidx.runtime.livedata)

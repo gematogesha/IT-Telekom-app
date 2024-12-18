@@ -1,6 +1,7 @@
 package com.ittelekom.app.viewmodels
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -48,9 +49,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
     fun changeTariff(tariffId: Int) {
         fetchData(
             state = State.LOADING_ITEM,
-            requests = listOf(
-                { RetrofitInstance.api.setTariff("Bearer ${getToken()}", tariffId) }
-            )
+            requests = listOf { RetrofitInstance.api.setTariff("Bearer ${getToken()}", tariffId) }
         ) { responses ->
             val response = responses[0]
             if (response != null) {
@@ -67,15 +66,13 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
     fun undoChangeTariff() {
         fetchData(
             state = State.LOADING_ITEM,
-            requests = listOf(
-                { RetrofitInstance.api.undoChangeTariff("Bearer ${getToken()}") }
-            )
+            requests = listOf { RetrofitInstance.api.undoChangeTariff("Bearer ${getToken()}") }
         ) { responses ->
             val response = responses[0]
             if (response != null) {
                 tariffChangeMessage = "Смена тарифа отменена"
                 isTariffChangeSuccessful = false
-                loadTariffInfo(State.IDLE) // Обновляем тарифы после отмены смены
+                loadTariffInfo(State.LOADING_ITEM) // Обновляем тарифы после отмены смены
             } else {
                 tariffChangeMessage = "Не удалось отменить смену тарифа"
             }
