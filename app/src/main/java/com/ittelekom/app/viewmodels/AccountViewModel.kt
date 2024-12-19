@@ -40,7 +40,6 @@ class AccountViewModel(application: Application) : BaseViewModel(application) {
                 accountInfo = it
                 isDataLoaded = true
             }
-
         }
     }
 
