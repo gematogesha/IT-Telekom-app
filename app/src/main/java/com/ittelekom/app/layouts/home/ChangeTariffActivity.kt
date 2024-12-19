@@ -84,6 +84,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
     val isRefreshing = viewModel.isRefreshingState()
     val isLoading = viewModel.isLoadingState()
     val isLoadingItem = viewModel.isLoadingItemState()
+    var isEnable by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         if (tariffs == null) viewModel.loadTariffInfo(BaseViewModel.State.LOADING)
@@ -157,6 +158,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                     } else {
                         if (tariffs != null && accountInfo != null) {
                             val tariffsList = tariffs.tariffs
+                            Log.d("ChangeTariffScreen", "Tariffs: $tariffsList")
                             val radioOptions = tariffsList.map { it.caption }
                             val initialSelectedOption =
                                 accountInfo.tariff_caption.takeIf { it in radioOptions }
@@ -170,6 +172,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                     if (tariffsList.isNotEmpty()) {
                                         Column(Modifier.selectableGroup()) {
                                             tariffsList.forEach { tariff ->
+                                                val isCurrentTariff = tariff.caption == accountInfo.tariff_caption
                                                 val formattedSpeed =
                                                     tariff.speed.replace("[.*]+$".toRegex(), "")
                                                 val formattedAbonplata = tariff.abonplata
@@ -194,14 +197,17 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                                         .selectable(
                                                             selected = (tariff.caption == selectedOption),
                                                             onClick = {
-                                                                selectedOption = tariff.caption
+                                                                if (!isCurrentTariff) selectedOption = tariff.caption
                                                             },
+                                                            enabled = !isCurrentTariff,
                                                             role = Role.RadioButton
                                                         ),
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     ListItem(
-                                                        headlineContent = { Text(tariff.caption) },
+                                                        headlineContent = {
+                                                            Text(tariff.caption + if (isCurrentTariff) " (Активный)" else "")
+                                                        },
                                                         supportingContent = { Text("Скорость: $formattedSpeed, Абон. плата: $formattedAbonplata") },
                                                         leadingContent = {
                                                             RadioButton(
@@ -216,12 +222,12 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
-                                                .padding(16.dp)
+                                                .padding(top = 16.dp, start = 40.dp, end = 40.dp),
                                         ) {
                                             Button(
                                                 modifier = Modifier
                                                     .fillMaxWidth(),
-                                                enabled = !isLoadingItem,
+                                                enabled = !isLoadingItem || isEnable,
                                                 onClick = {
                                                     tariffsList.find { it.caption == selectedOption }
                                                         ?.let { selectedTariff ->
@@ -251,6 +257,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                             }
                         } else if (errorMessage != null) {
                             ErrorDisplay(
+                                refreshFunction = { viewModel.refreshTariffInfo() },
                                 errorMessage = errorMessage,
                                 modifier = Modifier.align(Alignment.Center),
                             )

@@ -32,6 +32,7 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
     ) {
         if (!isInternetAvailable()) {
             setError("Нет подключения к интернету")
+            currentState = State.IDLE
             return
         }
 

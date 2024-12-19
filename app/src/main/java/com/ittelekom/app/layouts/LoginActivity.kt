@@ -132,7 +132,6 @@ fun LoginScreen() {
 
                 OutlinedTextField(
                     value = login,
-                    textStyle = Typography.bodyMedium,
                     onValueChange = { login = it },
                     label = { Text("Логин") },
                     leadingIcon = {
@@ -149,7 +148,6 @@ fun LoginScreen() {
 
                 OutlinedTextField(
                     value = password,
-                    textStyle = Typography.bodyMedium,
                     onValueChange = { password = it },
                     label = { Text("Пароль") },
                     leadingIcon = {
@@ -165,6 +163,8 @@ fun LoginScreen() {
                         .padding(bottom = 30.dp, start = 40.dp, end = 40.dp),
                     singleLine = true
                 )
+
+                //TODO: Новая функция login
 
                 Button(
                     onClick = {

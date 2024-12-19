@@ -86,7 +86,7 @@ fun DisplayScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Информация") },
+                title = { Text("Отображение") },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
                         Icon(

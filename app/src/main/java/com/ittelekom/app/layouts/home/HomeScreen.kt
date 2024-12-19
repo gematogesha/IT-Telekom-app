@@ -49,6 +49,7 @@ import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.ui.util.AccountBalanceCard
 import com.ittelekom.app.ui.util.AccountSelectCard
+import com.ittelekom.app.ui.util.ErrorDisplay
 import com.ittelekom.app.utils.TokenManager
 import com.ittelekom.app.viewmodels.AccountViewModel
 
@@ -111,31 +112,39 @@ fun HomeScreen(viewModel: AccountViewModel) {
                             .fillMaxSize()
                             .padding(all = 16.dp)
                     ) {
-                        if (isLoading || accountInfo == null) {
+                        if (isLoading) {
                             CustomLoadingIndicator()
                         } else {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                            ) {
-                                item {
-                                    AccountSelectCard(
-                                        info = accountInfo,
-                                        accounts = accounts,
-                                        selectedAccount = selectedAccount,
-                                        onAccountSelected = { account ->
-                                            selectedAccount = account
-                                        }
-                                    )
+                            if (accountInfo != null) {
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                ) {
+                                    item {
+                                        AccountSelectCard(
+                                            info = accountInfo,
+                                            accounts = accounts,
+                                            selectedAccount = selectedAccount,
+                                            onAccountSelected = { account ->
+                                                selectedAccount = account
+                                            }
+                                        )
+                                    }
+                                    item {
+                                        AccountBalanceCard(
+                                            info = accountInfo,
+                                            showAddOpt = false
+                                        )
+                                    }
+                                    item {
+                                        TariffCard(accountInfo)
+                                    }
                                 }
-                                item {
-                                    AccountBalanceCard(
-                                        info = accountInfo,
-                                        showAddOpt = false
-                                    )
-                                }
-                                item {
-                                    TariffCard(accountInfo)
-                                }
+                            } else if (errorMessage != null) {
+                                ErrorDisplay(
+                                    refreshFunction = { viewModel.refreshAccountInfo() },
+                                    errorMessage = errorMessage,
+                                    modifier = Modifier.align(Alignment.Center),
+                                )
                             }
                         }
                     }

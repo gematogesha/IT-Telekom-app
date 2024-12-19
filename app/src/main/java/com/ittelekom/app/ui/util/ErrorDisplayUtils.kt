@@ -12,10 +12,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.rounded.SignalWifiConnectedNoInternet4
-
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModel
+import com.ittelekom.app.components.ButtonLoadingIndicator
 
 @Composable
 fun ErrorDisplay(
+    refreshFunction: () -> Unit,
     errorMessage: String?,
     modifier: Modifier = Modifier,
     iconSize: Dp = 170.dp,
@@ -40,13 +43,21 @@ fun ErrorDisplay(
                 modifier = Modifier
                     .size(iconSize)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = errorMessage ?: defaultErrorMessage,
                 style = textStyle,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    refreshFunction()
+                }
+            ) {
+                Text("Обновить")
+            }
         }
     }
 }

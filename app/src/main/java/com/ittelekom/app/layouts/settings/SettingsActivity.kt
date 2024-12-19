@@ -78,7 +78,7 @@ fun SettingsScreen(onBackPressed: () -> Unit) {
     val menuItems = listOf(
         MenuItem(
             title = "Отображение",
-            subtitle = "Secondary text",
+            subtitle = "Тема и пр.",
             icon = Icons.Outlined.Palette,
             activityClass = DisplayActivity::class.java
         ),
