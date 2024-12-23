@@ -57,5 +57,16 @@ interface ApiService {
     suspend fun logout(
         @Header("Authorization") token: String
     ): Response<ResponseBody>
+
+    @FormUrlEncoded
+    @POST("submit_btn.php")
+    suspend fun submitData(
+        @Field("pin") pin: String,
+        @Field("fio") fio: String,
+        @Field("pay_summ") paySumm: String,
+        @Field("phone") phone: String,
+        @Field("add_pay_yookassa_btn") addPayYooKassaBtn: String
+    ): Response<ResponseBody>
+
 }
 

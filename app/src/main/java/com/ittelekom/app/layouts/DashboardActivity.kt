@@ -40,9 +40,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.ittelekom.app.layouts.chat.ChatScreen
 import com.ittelekom.app.layouts.home.HomeScreen
 import com.ittelekom.app.layouts.payment.PaymentScreen
 import com.ittelekom.app.layouts.profile.ProfileScreen
+import com.ittelekom.app.layouts.statistics.StatisticsScreen
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.utils.TokenManager
 import com.ittelekom.app.viewmodels.AccountViewModel
@@ -95,10 +97,10 @@ fun DashboardScreen() {
                 PaymentScreen(viewModel = viewModel)
             }
             composable("chat") {
-                ChatScreen()
+                ChatScreen(viewModel = viewModel)
             }
             composable("statistics") {
-                StatisticsScreen()
+                StatisticsScreen(viewModel = viewModel)
             }
             composable("profile") {
                 ProfileScreen()
@@ -149,19 +151,4 @@ fun BottomNavigationBar(navController: NavHostController) {
             )
         }
     }
-}
-
-@Composable
-fun ChatScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize(),
-
-    ) {  }
-    Text("В разработке", fontSize = 20.sp)
-}
-
-@Composable
-fun StatisticsScreen() {
-    Text("В разработке", modifier = Modifier.fillMaxSize(), fontSize = 20.sp)
 }

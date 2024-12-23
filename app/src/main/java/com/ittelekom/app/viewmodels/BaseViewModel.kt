@@ -46,8 +46,6 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
                     requests.map { it() }
                 }
 
-                Log.d("BaseViewModel", "Responses: $responses")
-
                 if (responses.all { it.isSuccessful }) {
                     onSuccess(responses.map { it.body() })
                 } else {

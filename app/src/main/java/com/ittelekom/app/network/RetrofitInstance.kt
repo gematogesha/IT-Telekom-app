@@ -14,3 +14,15 @@ object RetrofitInstance {
             .create(ApiService::class.java)
     }
 }
+
+object StatsRetrofitInstance {
+    private const val BASE_URL = "https://stats.it-net.org/"
+
+    val api: ApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+    }
+}

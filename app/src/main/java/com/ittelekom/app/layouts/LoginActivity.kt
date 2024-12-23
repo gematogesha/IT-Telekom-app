@@ -168,7 +168,11 @@ fun LoginScreen() {
 
                 Button(
                     onClick = {
-                        if (TokenManager.getInstance(context).hasAccount(login)) {
+                        if (login.isBlank() || password.isBlank()) {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                snackbarHostState.showSnackbar("Заполните все поля")
+                            }
+                        } else if (TokenManager.getInstance(context).hasAccount(login)) {
                             CoroutineScope(Dispatchers.Main).launch {
                                 snackbarHostState.showSnackbar("Этот аккаунт уже добавлен")
                             }

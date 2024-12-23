@@ -84,7 +84,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
     val isRefreshing = viewModel.isRefreshingState()
     val isLoading = viewModel.isLoadingState()
     val isLoadingItem = viewModel.isLoadingItemState()
-    var isEnable by remember { mutableStateOf(true) }
+    val isEnable by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         if (tariffs == null) viewModel.loadTariffInfo(BaseViewModel.State.LOADING)
@@ -227,7 +227,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                             Button(
                                                 modifier = Modifier
                                                     .fillMaxWidth(),
-                                                enabled = !isLoadingItem || isEnable,
+                                                enabled = !isLoadingItem,
                                                 onClick = {
                                                     tariffsList.find { it.caption == selectedOption }
                                                         ?.let { selectedTariff ->
