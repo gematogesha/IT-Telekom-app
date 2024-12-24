@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -58,6 +60,9 @@ import com.ittelekom.app.models.groupPayments
 import com.ittelekom.app.ui.util.ErrorDisplay
 import com.ittelekom.app.utils.TokenManager
 import com.ittelekom.app.viewmodels.AccountViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -142,18 +147,38 @@ fun StatisticsScreen(viewModel: AccountViewModel) {
                                     }
                                     groupedPayments.forEach { (caption, subgroups) ->
                                         item {
-                                            Text(
-                                                text = caption,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                modifier = Modifier.padding(vertical = 8.dp)
-                                            )
-                                        }
-                                        subgroups.forEach { (remark, totalVolume) ->
-                                            item {
-                                                PaymentItem(
-                                                    remark = remark,
-                                                    totalVolume = totalVolume
-                                                )
+                                            Card(
+                                                modifier = Modifier
+                                                    .padding(bottom = 16.dp)
+                                                    .fillMaxWidth(),
+                                                shape = RoundedCornerShape(20.dp),
+                                                elevation = CardDefaults.cardElevation(2.dp),
+                                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                                            ) {
+                                                Column(
+                                                    modifier = Modifier.padding(16.dp),
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                    ) {
+                                                        Text(
+                                                            text = if (caption == "Снятие") "Использование трафика" else caption,
+                                                            style = MaterialTheme.typography.titleMedium,
+                                                            color = MaterialTheme.colorScheme.onSurface,
+                                                        )
+                                                    }
+
+                                                    subgroups.forEach { (remark, totalVolume) ->
+                                                        PaymentItem(
+                                                            groupedPayments = groupedPayments,
+                                                            remark = remark,
+                                                            totalVolume = totalVolume,
+                                                            caption = caption
+                                                        )
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -174,25 +199,35 @@ fun StatisticsScreen(viewModel: AccountViewModel) {
 }
 
 @Composable
-fun PaymentItem(remark: String, totalVolume: Double) {
-    Card(
+fun PaymentItem(
+    groupedPayments: Map<String, Map<String, Double>>,
+    remark: String,
+    totalVolume: Double,
+    caption: String // Добавляем параметр caption
+) {
+    val spendingPayments = groupedPayments["Снятие"] ?: emptyMap()
+    val totalAmount = spendingPayments.values.sum().toFloat()
+
+    val percentage = if (caption == "Снятие" && totalAmount != 0f) {
+        (totalVolume / totalAmount).toFloat()
+    } else {
+        null
+    }
+
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        shape = RoundedCornerShape(10.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+            .padding(top = 16.dp)
+            .fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = remark,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Normal,
             )
             Text(
                 text = "%.2f ₽".format(totalVolume),
@@ -200,14 +235,25 @@ fun PaymentItem(remark: String, totalVolume: Double) {
                 color = MaterialTheme.colorScheme.primary
             )
         }
+        if (caption == "Снятие" && totalAmount != 0f && spendingPayments.size != 1) {
+            percentage?.let {
+                LinearProgressIndicator(
+                    progress = {
+                        it
+                    },
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .fillMaxWidth(),
+                )
+            }
+        }
     }
 }
+
 
 @Composable
 fun CircularChartCard(groupedPayments: Map<String, Map<String, Double>>) {
     val spendingPayments = groupedPayments["Снятие"] ?: emptyMap()
-    Log.d("CircularChartCard", "spendingPayments: $spendingPayments")
-
     val totalAmount = spendingPayments.values.sum().toFloat()
 
     val colors = listOf(
@@ -221,6 +267,14 @@ fun CircularChartCard(groupedPayments: Map<String, Map<String, Double>>) {
         remark to (value.toFloat() to colors[index % colors.size])
     }
 
+    val currentDate = LocalDate.now()
+
+    val monthFormatter = DateTimeFormatter.ofPattern("LLLL", Locale("ru", "RU"))
+    val month = currentDate.format(monthFormatter).replaceFirstChar { it.uppercaseChar() }
+
+    // Год
+    val year = currentDate.year
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -232,6 +286,11 @@ fun CircularChartCard(groupedPayments: Map<String, Map<String, Double>>) {
         Column(
             modifier = Modifier.padding(16.dp),
         ) {
+            Text(
+                text = "$month - $year год",
+                modifier = Modifier.padding(bottom = 8.dp)
+
+            )
             Box(
                 modifier = Modifier
                     .fillMaxWidth(),
