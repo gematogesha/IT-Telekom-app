@@ -132,7 +132,7 @@ fun StatisticsScreen(viewModel: AccountViewModel) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                            .padding(horizontal = 16.dp)
                     ) {
                         if (isLoading) {
                             CustomLoadingIndicator()
