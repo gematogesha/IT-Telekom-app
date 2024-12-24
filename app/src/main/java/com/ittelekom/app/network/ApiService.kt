@@ -2,6 +2,7 @@ package com.ittelekom.app.network
 
 import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.models.PayToDate
+import com.ittelekom.app.models.Pays
 import com.ittelekom.app.models.Services
 import com.ittelekom.app.models.Tariffs
 import okhttp3.ResponseBody
@@ -40,6 +41,11 @@ interface ApiService {
     suspend fun getTariffs(
         @Header("Authorization") token: String
     ): Response<Tariffs>
+
+    @GET("accounts/get_pays")
+    suspend fun getPays(
+        @Header("Authorization") token: String
+    ): Response<Pays>
 
     @FormUrlEncoded
     @POST("accounts/change_tariff")

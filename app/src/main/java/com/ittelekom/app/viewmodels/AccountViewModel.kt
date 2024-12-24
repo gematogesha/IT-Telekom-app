@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import com.example.it_telekom_app.viewmodels.BaseViewModel
 import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.models.PayToDate
+import com.ittelekom.app.models.Pays
 import com.ittelekom.app.models.Services
 import com.ittelekom.app.network.RetrofitInstance
 
@@ -27,16 +28,19 @@ class AccountViewModel(application: Application) : BaseViewModel(application) {
             requests = listOf(
                 { RetrofitInstance.api.getAccountInfo("Bearer ${getToken()}") },
                 { RetrofitInstance.api.getPayToDate("Bearer ${getToken()}") },
-                { RetrofitInstance.api.getServices("Bearer ${getToken()}") }
+                { RetrofitInstance.api.getServices("Bearer ${getToken()}") },
+                { RetrofitInstance.api.getPays("Bearer ${getToken()}") }
             )
         ) { responses ->
             val accountInfoResponse = responses[0] as? AccountInfo
             val payToDateResponse = responses[1] as? PayToDate
             val servicesResponse = responses[2] as? Services
+            val paysResponse = responses[3] as? Pays
 
             accountInfoResponse?.let {
                 it.payToDate = payToDateResponse
                 it.services = servicesResponse?.services ?: emptyList()
+                it.pays = paysResponse?.pays ?: emptyList()
                 accountInfo = it
                 isDataLoaded = true
             }

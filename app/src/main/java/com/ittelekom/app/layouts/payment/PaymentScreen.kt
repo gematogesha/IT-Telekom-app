@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.it_telekom_app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.CustomLoadingIndicator
@@ -50,6 +48,7 @@ import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.ui.util.AccountBalanceCard
 import com.ittelekom.app.ui.util.AccountSelectCard
+import com.ittelekom.app.ui.util.ErrorDisplay
 import com.ittelekom.app.utils.TokenManager
 import com.ittelekom.app.viewmodels.AccountViewModel
 
@@ -110,33 +109,41 @@ fun PaymentScreen(viewModel: AccountViewModel) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(all = 16.dp)
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
                     ) {
-                        if (isLoading || accountInfo == null) {
+                        if (isLoading) {
                             CustomLoadingIndicator()
                         } else {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                            ) {
-                                item {
-                                    AccountSelectCard(
-                                        info = accountInfo,
-                                        accounts = accounts,
-                                        selectedAccount = selectedAccount,
-                                        onAccountSelected = { account ->
-                                            selectedAccount = account
-                                        }
-                                    )
+                            if (accountInfo != null) {
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                ) {
+                                    item {
+                                        AccountSelectCard(
+                                            info = accountInfo,
+                                            accounts = accounts,
+                                            selectedAccount = selectedAccount,
+                                            onAccountSelected = { account ->
+                                                selectedAccount = account
+                                            }
+                                        )
+                                    }
+                                    item {
+                                        AccountBalanceCard(
+                                            info = accountInfo,
+                                            showAddOpt = true
+                                        )
+                                    }
+                                    item {
+                                        PaymentMethodCard()
+                                    }
                                 }
-                                item {
-                                    AccountBalanceCard(
-                                        info = accountInfo,
-                                        showAddOpt = true
-                                    )
-                                }
-                                item {
-                                    PaymentMethodCard()
-                                }
+                            } else if (errorMessage != null) {
+                                ErrorDisplay(
+                                    refreshFunction = { viewModel.refreshAccountInfo() },
+                                    errorMessage = errorMessage,
+                                    modifier = Modifier.align(Alignment.Center),
+                                )
                             }
                         }
                     }
@@ -156,7 +163,7 @@ fun PaymentMethodCard() {
             .fillMaxWidth()
             .padding(bottom = 16.dp),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(1.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(

@@ -110,14 +110,15 @@ fun HomeScreen(viewModel: AccountViewModel) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(all = 16.dp)
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
                     ) {
                         if (isLoading) {
                             CustomLoadingIndicator()
                         } else {
                             if (accountInfo != null) {
                                 LazyColumn(
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier
+                                        .fillMaxSize(),
                                 ) {
                                     item {
                                         AccountSelectCard(
@@ -166,14 +167,13 @@ fun TariffCard(info: AccountInfo) {
             .padding(bottom = 16.dp)
             .wrapContentHeight(),
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(1.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
             modifier = Modifier
                 .padding(horizontal = 18.dp, vertical = 16.dp),
         ) {
-            // Название тарифа и скорость
             tariffService?.let {
                 Row(
                     modifier = Modifier

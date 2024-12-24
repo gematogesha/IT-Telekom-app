@@ -1,5 +1,7 @@
 package com.ittelekom.app.models
 
+import java.util.Locale
+
 data class AccountInfo(
     val name: String,
     val login: String,
@@ -11,7 +13,8 @@ data class AccountInfo(
     val sms_get: Boolean,
     val token_fsm: String,
     var payToDate: PayToDate? = null,
-    var services: List<ServiceInfo> = emptyList()
+    var services: List<ServiceInfo> = emptyList(),
+    var pays: List<PaysInfo> = emptyList()
 )
 
 data class PayToDate(
@@ -29,3 +32,63 @@ data class ServiceInfo(
     val svc_num_dog: String,
     val svc_address: String
 )
+
+data class Pays(
+    val pays: List<PaysInfo>
+)
+
+data class PaysInfo(
+    val paydate: String,
+    val caption: String,
+    val remark: String,
+    val volume: String
+)
+
+fun groupPayments(pays: List<PaysInfo>): Map<String, Map<String, Double>> {
+    return pays.groupBy { it.caption }.mapValues { (_, group) ->
+        group.groupBy { remark ->
+            processRemark(remark.remark)
+        }.mapKeys { (key, _) ->
+            capitalizeWords(key)
+        }.mapValues { (_, subgroup) ->
+            subgroup.sumOf { it.volume.toDouble() }
+                .let { kotlin.math.abs(it) }
+                .let { String.format(Locale.US, "%.2f", it).toDouble() }
+        }
+    }
+}
+
+// Функция обработки remark
+fun processRemark(remark: String): String {
+    val cleanedRemark = remark.replace(Regex("login:.*"), "").trim() // Убираем login и всё после него
+    return when {
+        "абон.плата" in cleanedRemark.lowercase() -> "Абонентская плата"
+        "внесение денег" in cleanedRemark.lowercase() -> "Внесение денег"
+        else -> extractKeyWords(cleanedRemark)
+    }
+}
+
+// Извлечение ключевых слов из remark
+fun extractKeyWords(remark: String): String {
+    val words = remark.lowercase()
+        .replace(Regex("[^a-zа-яё\\s]"), "")
+        .split("\\s+".toRegex())
+        .filter { it.isNotBlank() }
+
+    return words.joinToString(" ")
+}
+
+// Функция для преобразования строки в Title Case
+fun capitalizeWords(input: String): String {
+    val exceptions = setOf("тв", "вк", "ср", "ок", "рф")
+
+    return input.lowercase()
+        .split(" ")
+        .joinToString(" ") { word ->
+            if (word in exceptions) {
+                word.uppercase()
+            } else {
+                word.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("ru", "RU")) else it.toString() }
+            }
+        }
+}

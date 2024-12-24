@@ -118,9 +118,7 @@ fun BottomNavigationBar(navController: NavHostController) {
     val selectedIcons = listOf(Icons.Filled.Home, Icons.Filled.AccountBalanceWallet, Icons.Filled.ChatBubble, Icons.Filled.Leaderboard, Icons.Filled.Person)
     val unselectedIcons = listOf(Icons.Outlined.Home, Icons.Outlined.AccountBalanceWallet, Icons.Outlined.ChatBubbleOutline, Icons.Outlined.Leaderboard, Icons.Outlined.Person)
 
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
+    NavigationBar {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
                 icon = {

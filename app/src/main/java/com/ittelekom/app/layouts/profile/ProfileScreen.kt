@@ -93,7 +93,7 @@ fun ProfileScreen() {
 
             Box(
                 modifier = Modifier
-                    .padding(top = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 4.dp)
                     .wrapContentSize(Alignment.TopEnd)
             ) {
                 DropdownMenu(
