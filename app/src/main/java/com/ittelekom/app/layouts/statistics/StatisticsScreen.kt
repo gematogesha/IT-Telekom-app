@@ -203,7 +203,7 @@ fun PaymentItem(
     groupedPayments: Map<String, Map<String, Double>>,
     remark: String,
     totalVolume: Double,
-    caption: String // Добавляем параметр caption
+    caption: String
 ) {
     val spendingPayments = groupedPayments["Снятие"] ?: emptyMap()
     val totalAmount = spendingPayments.values.sum().toFloat()
@@ -233,14 +233,13 @@ fun PaymentItem(
                 text = "%.2f ₽".format(totalVolume),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary
+                //color = MaterialTheme.colorScheme.onSurface
             )
         }
         if (caption == "Снятие" && totalAmount != 0f && spendingPayments.size != 1) {
             percentage?.let {
                 LinearProgressIndicator(
-                    progress = {
-                        it
-                    },
+                    progress = { it },
                     modifier = Modifier
                         .padding(top = 12.dp)
                         .fillMaxWidth(),
@@ -268,11 +267,8 @@ fun CircularChartCard(groupedPayments: Map<String, Map<String, Double>>) {
     }
 
     val currentDate = LocalDate.now()
-
     val monthFormatter = DateTimeFormatter.ofPattern("LLLL", Locale("ru", "RU"))
     val month = currentDate.format(monthFormatter).replaceFirstChar { it.uppercaseChar() }
-
-    // Год
     val year = currentDate.year
 
     Card(
@@ -288,8 +284,8 @@ fun CircularChartCard(groupedPayments: Map<String, Map<String, Double>>) {
         ) {
             Text(
                 text = "$month - $year год",
-                modifier = Modifier.padding(bottom = 8.dp)
-
+                modifier = Modifier.padding(bottom = 8.dp),
+                style = MaterialTheme.typography.titleMedium
             )
             Box(
                 modifier = Modifier
@@ -371,7 +367,7 @@ fun CircularChart(
     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(150.dp)) {
         Text(
             text = centerText,
-            style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
     }
