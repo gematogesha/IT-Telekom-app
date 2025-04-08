@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.it_telekom_app.viewmodels.BaseViewModel
 import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.models.PayToDate
 import com.ittelekom.app.models.Pays

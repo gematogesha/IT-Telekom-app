@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.Smartphone
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,8 +42,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.it_telekom_app.viewmodels.BaseViewModel
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.layouts.LoginActivity
@@ -100,7 +102,6 @@ fun PaymentScreen(viewModel: AccountViewModel) {
                     viewModel.pullToRefreshAccountInfo()
                 },
                 modifier = Modifier.fillMaxSize(),
-                indicatorPadding = PaddingValues(16.dp)
             ) {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
@@ -189,7 +190,9 @@ fun PaymentMethodCard() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row{
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ){
                     Icon(
                         imageVector = Icons.Outlined.CreditCard,
                         contentDescription = null,
@@ -220,14 +223,16 @@ fun PaymentMethodCard() {
                 }
             }
 
-            Divider(modifier = Modifier.padding(vertical = 4.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row{
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ){
                     Icon(
                         imageVector = Icons.Outlined.Smartphone,
                         contentDescription = null,
@@ -235,8 +240,6 @@ fun PaymentMethodCard() {
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-
-                    //TODO: Выровнять текст с иконками
 
                     Text(
                         text = "По номеру телефона",

@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.it_telekom_app.viewmodels.BaseViewModel
+import com.ittelekom.app.models.SetTariffResponse
 import com.ittelekom.app.models.Tariffs
 import com.ittelekom.app.network.RetrofitInstance
 
@@ -51,11 +51,16 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
             state = State.LOADING_ITEM,
             requests = listOf { RetrofitInstance.api.setTariff("Bearer ${getToken()}", tariffId) }
         ) { responses ->
-            val response = responses[0]
+            val response = responses[0] as? SetTariffResponse
             if (response != null) {
-                tariffChangeMessage = "Тариф успешно изменен"
-                isTariffChangeSuccessful = true
-                loadTariffInfo(State.IDLE) // Обновляем данные после смены тарифа
+                if (response.success) {
+                    tariffChangeMessage = "Тариф успешно изменен"
+                    isTariffChangeSuccessful = true
+                } else {
+                    tariffChangeMessage = "Не удалось изменить тариф"
+                    isTariffChangeSuccessful = false
+                }
+                loadTariffInfo(State.IDLE)
             } else {
                 tariffChangeMessage = "Не удалось изменить тариф"
                 isTariffChangeSuccessful = false
@@ -63,6 +68,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
         }
     }
 
+    //TODO: Добавить проверку на успешность ответа
     fun undoChangeTariff() {
         fetchData(
             state = State.LOADING_ITEM,

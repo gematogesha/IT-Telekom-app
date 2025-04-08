@@ -43,11 +43,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.it_telekom_app.viewmodels.BaseViewModel
-import com.example.it_telekom_app.viewmodels.BaseViewModel.State
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.ButtonLoadingIndicator
 import com.ittelekom.app.components.CustomLoadingIndicator
-import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.network.StatsRetrofitInstance
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.ui.util.ErrorDisplay

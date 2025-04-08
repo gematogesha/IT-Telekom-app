@@ -13,11 +13,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,8 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.it_telekom_app.viewmodels.BaseViewModel
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.layouts.LoginActivity
@@ -123,7 +120,7 @@ fun StatisticsScreen(viewModel: AccountViewModel) {
                     viewModel.pullToRefreshAccountInfo()
                 },
                 modifier = Modifier.fillMaxSize(),
-                indicatorPadding = PaddingValues(30.dp)
+                indicatorPadding = PaddingValues(40.dp)
             ) {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,

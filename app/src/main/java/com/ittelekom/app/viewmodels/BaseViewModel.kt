@@ -1,4 +1,4 @@
-package com.example.it_telekom_app.viewmodels
+package com.ittelekom.app.viewmodels
 
 import android.app.Application
 import android.content.Context

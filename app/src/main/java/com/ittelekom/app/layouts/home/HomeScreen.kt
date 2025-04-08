@@ -42,7 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.it_telekom_app.viewmodels.BaseViewModel
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.layouts.LoginActivity
@@ -101,7 +101,6 @@ fun HomeScreen(viewModel: AccountViewModel) {
                     viewModel.pullToRefreshAccountInfo()
                 },
                 modifier = Modifier.fillMaxSize(),
-                indicatorPadding = PaddingValues(16.dp)
             ) {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,

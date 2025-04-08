@@ -44,7 +44,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.it_telekom_app.viewmodels.BaseViewModel
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.ButtonLoadingIndicator
 import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
@@ -158,7 +158,6 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                     } else {
                         if (tariffs != null && accountInfo != null) {
                             val tariffsList = tariffs.tariffs
-                            Log.d("ChangeTariffScreen", "Tariffs: $tariffsList")
                             val radioOptions = tariffsList.map { it.caption }
                             val initialSelectedOption =
                                 accountInfo.tariff_caption.takeIf { it in radioOptions }

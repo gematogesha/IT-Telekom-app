@@ -4,6 +4,7 @@ import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.models.PayToDate
 import com.ittelekom.app.models.Pays
 import com.ittelekom.app.models.Services
+import com.ittelekom.app.models.SetTariffResponse
 import com.ittelekom.app.models.Tariffs
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -52,7 +53,7 @@ interface ApiService {
     suspend fun setTariff(
         @Header("Authorization") token: String,
         @Field("new_tariff_id") tariffId: Int
-    ): Response<Unit>
+    ): Response<SetTariffResponse>
 
     @POST("accounts/undo_change_tariff")
     suspend fun undoChangeTariff(

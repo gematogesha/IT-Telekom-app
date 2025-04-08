@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.it_telekom_app.viewmodels.BaseViewModel
 import com.ittelekom.app.layouts.DashboardActivity
 import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.network.RetrofitInstance

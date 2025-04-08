@@ -1,5 +1,6 @@
 package com.ittelekom.app.layouts
 
+import ThemeManager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -18,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -99,7 +99,6 @@ fun saveToken(context: Context, username: String, token: String) {
     TokenManager.getInstance(context).saveToken(username, token)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun LoginScreen() {

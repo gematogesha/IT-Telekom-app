@@ -5,18 +5,27 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,7 +76,7 @@ fun ProfileManagerScreen(onBackPressed: () -> Unit) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val viewModel: LoginLogoutModel = viewModel()
-    val isLoading = viewModel.isLoadingItemState()
+
 
     val tokenManager = TokenManager.getInstance(context)
     val accounts = tokenManager.getAllAccounts()
@@ -77,7 +87,7 @@ fun ProfileManagerScreen(onBackPressed: () -> Unit) {
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text("Управление аккаунтами", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = { Text("Управление аккаунтом", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
                         Icon(
@@ -89,64 +99,113 @@ fun ProfileManagerScreen(onBackPressed: () -> Unit) {
                 scrollBehavior = scrollBehavior
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) {
-        Surface(
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(40.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        content = { innerPadding ->
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxSize()
             ) {
-
-                Text("Профиль", fontSize = 20.sp)
-
-                Text("Активный аккаунт: $activeAccount", fontSize = 16.sp)
-                Text("Доступные аккаунты:", fontSize = 16.sp)
-
-                accounts.forEach { account ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                tokenManager.setActiveAccount(account)
-                            }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    LazyColumn(
+                        contentPadding = innerPadding,
+                        modifier = Modifier.fillMaxSize(),
                     ) {
-                        Text(account)
-                        IconButton(onClick = {
-                            viewModel.logout(account)
-                        }) {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = "Удалить аккаунт")
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp),
+                                shape = RoundedCornerShape(20.dp),
+                                elevation = CardDefaults.cardElevation(2.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(horizontal = 18.dp, vertical = 16.dp),
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Доступные аккаунты",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+
+                                    accounts.forEachIndexed  { index, account ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = account,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.Normal,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+
+                                                if (account == activeAccount){
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    Icon(
+                                                        imageVector = Icons.Outlined.Check,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onSurface,
+                                                        modifier = Modifier.size(24.dp)
+                                                    )
+                                                }
+                                            }
+                                            IconButton(
+                                                onClick = {
+                                                    viewModel.logout(account)
+                                                },
+                                                modifier = Modifier.size(40.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Delete,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.onSurface,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+                                        }
+
+                                        if (index < accounts.size - 1) {
+                                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        item {
+                            Button(
+                                modifier = Modifier
+                                    .padding(vertical = 16.dp)
+                                    .fillMaxWidth(),
+                                onClick = {
+                                val intent = Intent(context, LoginActivity::class.java)
+                                intent.putExtra("isAddingAccount", true)
+                                context.startActivity(intent)
+                            }) {
+                                Text("Добавить аккаунт")
+                            }
                         }
                     }
                 }
-
-                Button(
-                    onClick = {
-                        viewModel.logout(activeAccount)
-                    },
-                    enabled = !isLoading
-                ) {
-                    if (isLoading) {
-                        ButtonLoadingIndicator()
-                    } else {
-                        Text("Выход")
-                    }
-                }
-
-                Button(onClick = {
-                    val intent = Intent(context, LoginActivity::class.java)
-                    intent.putExtra("isAddingAccount", true)
-                    context.startActivity(intent)
-                }) {
-                    Text("Добавить аккаунт")
-                }
             }
         }
-    }
+    )
 }
+

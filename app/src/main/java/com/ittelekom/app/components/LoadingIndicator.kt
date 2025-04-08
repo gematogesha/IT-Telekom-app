@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun CustomLoadingIndicator(
-    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary
+    color: Color = MaterialTheme.colorScheme.primary
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         CircularProgressIndicator(
