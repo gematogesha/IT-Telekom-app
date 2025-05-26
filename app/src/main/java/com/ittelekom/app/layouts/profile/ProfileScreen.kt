@@ -281,7 +281,7 @@ fun ProfileScreen() {
                                             Spacer(modifier = Modifier.width(8.dp))
 
                                             Text(
-                                                text = "Контыкты",
+                                                text = "Контакты",
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 color = MaterialTheme.colorScheme.onSurface,
 

@@ -18,7 +18,8 @@ data class AccountInfo(
 )
 
 data class PayToDate(
-    val to_date: String,
+    val to_date: String? = null,
+    val message: String? = null
 )
 
 data class Services(

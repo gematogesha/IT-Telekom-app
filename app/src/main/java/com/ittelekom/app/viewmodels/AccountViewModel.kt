@@ -19,8 +19,7 @@ class AccountViewModel(application: Application) : BaseViewModel(application) {
         private set
 
     fun loadAccountInfo(state: State) {
-        if (isDataLoaded && state != State.REFRESHING) return
-        if (isDataLoaded && state != State.LOADING_ITEM) return
+        if (isDataLoaded && state != State.REFRESHING && state != State.LOADING_ITEM) return
 
         fetchData(
             state = state,
