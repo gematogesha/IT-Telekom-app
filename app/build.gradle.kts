@@ -16,7 +16,7 @@ android {
         versionCode = 2
         val version = "1.0.1"
         val buildType = "Release"
-        val releaseDate = "03.12.2024"
+        val releaseDate = "27.05.2025"
         versionName = "$buildType $version ($releaseDate)"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

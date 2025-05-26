@@ -67,7 +67,7 @@ import java.util.Locale
 fun StatisticsScreen(viewModel: AccountViewModel) {
     val context = LocalContext.current
     val tokenManager = TokenManager.getInstance(context)
-    var selectedAccount by remember { mutableStateOf(tokenManager.getActiveAccount()) }
+    val selectedAccount by remember { mutableStateOf(tokenManager.getActiveAccount()) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     val accountInfo = viewModel.accountInfo
@@ -271,7 +271,7 @@ fun CircularChartCard(groupedPayments: Map<String, Map<String, Double>>) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp),
+            .padding(vertical = 16.dp),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
