@@ -18,12 +18,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Contacts
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.ManageAccounts
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
@@ -289,7 +289,9 @@ fun ProfileScreen() {
                                         }
                                         IconButton(
                                             onClick = {
-
+                                                expanded = false
+                                                val intent = Intent(context, ContactsScreen()::class.java)
+                                                context.startActivity(intent)
                                             },
                                             modifier = Modifier.size(40.dp)
                                         ) {
@@ -375,7 +377,7 @@ fun ProfileScreen() {
                                         ButtonLoadingIndicator()
                                     } else {
                                         Icon(
-                                            imageVector = Icons.Rounded.Logout,
+                                            imageVector = Icons.AutoMirrored.Rounded.Logout,
                                             contentDescription = "Logout",
                                             tint = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier.size(24.dp)

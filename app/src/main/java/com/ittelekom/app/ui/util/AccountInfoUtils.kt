@@ -1,6 +1,5 @@
 package com.ittelekom.app.ui.util
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -226,6 +225,9 @@ fun AccountBalanceCard(
     val currentDate = LocalDate.now()
     val isPayToDateExpired = payToDate?.isBefore(currentDate) == true
 
+    val payToDateMessage = info.payToDate?.message
+    val payToDateDisplayText = "до " + (info.payToDate?.to_date ?: "неизвестно")
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -286,7 +288,7 @@ fun AccountBalanceCard(
                     }
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = ("до " + info.payToDate?.to_date),
+                        text = payToDateDisplayText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.outline,
                         textAlign = TextAlign.Center
@@ -326,30 +328,31 @@ fun AccountBalanceCard(
                 )
             }
             if (showAddOpt) {
-                Spacer(modifier = Modifier.height(16.dp))
+                if (info.services.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        modifier = Modifier.weight(2F),
-                        text = "Рекомендуем к полате до ${info.payToDate?.to_date}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Text(
-                        modifier = Modifier.weight(1F),
-                        text = formattedPrice(info.services[0].svc_price),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.End
-                    )
-
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(2F),
+                            text = "Рекомендуем к полате ${payToDateDisplayText}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Spacer(modifier = Modifier.height(32.dp))
+                        Text(
+                            modifier = Modifier.weight(1F),
+                            text = formattedPrice(info.services[0].svc_price),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            textAlign = TextAlign.End
+                        )
+                    }
                 }
             }
         }

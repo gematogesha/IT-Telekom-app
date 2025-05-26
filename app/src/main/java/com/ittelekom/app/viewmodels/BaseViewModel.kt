@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.ittelekom.app.utils.TokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,10 +21,13 @@ import retrofit2.Response
 abstract class BaseViewModel(application: Application) : AndroidViewModel(application) {
     // Текущее состояние
     var currentState by mutableStateOf(State.IDLE)
-        private set
 
     var errorMessage by mutableStateOf<String?>(null)
         private set
+
+    data class ErrorMessage(
+        val message: String?
+    )
 
     protected fun fetchData(
         state: State,
@@ -46,20 +50,34 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
                     requests.map { it() }
                 }
 
-                if (responses.all { it.isSuccessful }) {
+                val allSuccessful = responses.all { it.isSuccessful }
+
+                if (allSuccessful) {
                     onSuccess(responses.map { it.body() })
                 } else {
-                    Log.e("BaseViewModel", "Error: ${responses.firstOrNull { !it.isSuccessful }}")
-                    setError("Ошибка загрузки данных")
+                    val firstError = responses.firstOrNull { !it.isSuccessful }
+
+                    val errorMsg = firstError?.errorBody()?.string()?.let { errorJson ->
+                        try {
+                            Gson().fromJson(errorJson, ErrorMessage::class.java).message
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    Log.e("BaseViewModel", "Ошибка загрузки: ${firstError?.code()} ${firstError?.message()}")
+
+                    setError(errorMsg ?: "Ошибка загрузки данных")
                 }
+
             } catch (e: Exception) {
-                Log.e("BaseViewModel", "Error executing requests", e)
+                Log.e("BaseViewModel", "Исключение при загрузке данных", e)
                 setError("Ошибка загрузки данных")
             } finally {
                 currentState = State.IDLE
             }
         }
     }
+
 
     private fun isInternetAvailable(): Boolean {
         val connectivityManager =
@@ -77,11 +95,11 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
         return activeAccount?.let { tokenManager.getToken(it) }
     }
 
-    private fun setError(message: String) {
+    fun setError(message: String) {
         errorMessage = message
     }
 
-    private fun resetError() {
+    fun resetError() {
         errorMessage = null
     }
 
@@ -92,7 +110,7 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
         REFRESHING
     }
 
-    fun isIdleState(): Boolean = currentState == State.IDLE
+    //fun isIdleState(): Boolean = currentState == State.IDLE
     fun isLoadingState(): Boolean = currentState == State.LOADING
     fun isLoadingItemState(): Boolean = currentState == State.LOADING_ITEM
     fun isRefreshingState(): Boolean = currentState == State.REFRESHING

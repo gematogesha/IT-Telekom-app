@@ -1,6 +1,12 @@
 package com.ittelekom.app.models
 
+import com.ittelekom.app.viewmodels.AccountViewModel
 import java.util.Locale
+
+
+interface MessageCarrier {
+    val message: String?
+}
 
 data class AccountInfo(
     val name: String,
@@ -14,29 +20,32 @@ data class AccountInfo(
     val token_fsm: String,
     var payToDate: PayToDate? = null,
     var services: List<ServiceInfo> = emptyList(),
-    var pays: List<PaysInfo> = emptyList()
-)
+    var pays: List<PaysInfo> = emptyList(),
+    override val message: String? = null
+) : MessageCarrier
 
 data class PayToDate(
     val to_date: String? = null,
-    val message: String? = null
-)
+    override val message: String? = null
+) : MessageCarrier
 
 data class Services(
-    val services: List<ServiceInfo>
-)
+    val services: List<ServiceInfo>,
+    override val message: String? = null
+) : MessageCarrier
 
 data class ServiceInfo(
     val svc_name: String,
     val svc_descr: String,
     val svc_price: String,
     val svc_num_dog: String,
-    val svc_address: String
+    val svc_address: String,
 )
 
 data class Pays(
-    val pays: List<PaysInfo>
-)
+    val pays: List<PaysInfo>,
+    override val message: String? = null
+) : MessageCarrier
 
 data class PaysInfo(
     val paydate: String,
@@ -61,22 +70,22 @@ fun groupPayments(pays: List<PaysInfo>): Map<String, Map<String, Double>> {
 
 // Функция обработки remark
 fun processRemark(remark: String): String {
-    val cleanedRemark = remark.replace(Regex("login:.*"), "").trim() // Убираем login и всё после него
+    val cleanedRemark = remark.replace(Regex("login:.*"), "").trim()
+    val lowerRemark = cleanedRemark.lowercase()
+
     return when {
-        "абон.плата" in cleanedRemark.lowercase() -> "Абонентская плата"
-        "внесение денег" in cleanedRemark.lowercase() -> "Внесение денег"
+        "абон.плата" in lowerRemark -> "Абонентская плата"
+        "внесение денег" in lowerRemark -> "Внесение денег"
         else -> extractKeyWords(cleanedRemark)
     }
 }
 
 // Извлечение ключевых слов из remark
 fun extractKeyWords(remark: String): String {
-    val words = remark.lowercase()
-        .replace(Regex("[^a-zа-яё\\s]"), "")
-        .split("\\s+".toRegex())
-        .filter { it.isNotBlank() }
-
-    return words.joinToString(" ")
+    return remark.lowercase()
+        .replace(Regex("[^\\p{L}\\p{N}\\s]"), " ")
+        .replace(Regex("\\s+"), " ")
+        .trim()
 }
 
 // Функция для преобразования строки в Title Case

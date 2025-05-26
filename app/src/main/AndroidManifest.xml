@@ -61,9 +61,14 @@
             android:theme="@style/Theme.ITTelekom">
         </activity>
         <activity
+            android:name=".layouts.profile.ContactsScreen"
+            android:theme="@style/Theme.ITTelekom">
+        </activity>
+        <activity
             android:name=".layouts.payment.PaymentFieldActivity"
             android:theme="@style/Theme.ITTelekom">
         </activity>
+
     </application>
 
 </manifest>

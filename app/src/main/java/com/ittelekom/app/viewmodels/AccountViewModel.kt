@@ -5,53 +5,107 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.ittelekom.app.models.AccountInfo
-import com.ittelekom.app.models.PayToDate
-import com.ittelekom.app.models.Pays
-import com.ittelekom.app.models.Services
+import com.ittelekom.app.models.MessageCarrier
 import com.ittelekom.app.network.RetrofitInstance
+import kotlinx.coroutines.launch
+import retrofit2.Response
 
-class AccountViewModel(application: Application) : BaseViewModel(application) {
+open class AccountViewModel(application: Application) : BaseViewModel(application) {
     var accountInfo by mutableStateOf<AccountInfo?>(null)
         private set
 
     var isDataLoaded by mutableStateOf(false)
         private set
 
+    private inline fun <reified T> handleResponse(
+        request: () -> Response<T>,
+        defaultError: String
+    ): T? where T : MessageCarrier {
+        val response = request()
+
+        if (response.isSuccessful) {
+            return response.body()
+        }
+
+        val errorBodyString = response.errorBody()?.string()
+        if (!errorBodyString.isNullOrEmpty()) {
+            try {
+                val errorObj = Gson().fromJson(errorBodyString, T::class.java)
+                if (!errorObj.message.isNullOrEmpty()) {
+                    Log.w("handleResponse", "Server message: ${errorObj.message}")
+                    return errorObj // Возвращаем объект с message, чтобы в UI было доступно сообщение
+                }
+            } catch (e: Exception) {
+                Log.e("handleResponse", "Error parsing error body", e)
+            }
+        }
+
+        setError(defaultError)
+        return null
+    }
+
     fun loadAccountInfo(state: State) {
         if (isDataLoaded && state != State.REFRESHING && state != State.LOADING_ITEM) return
 
-        fetchData(
-            state = state,
-            requests = listOf(
-                { RetrofitInstance.api.getAccountInfo("Bearer ${getToken()}") },
-                { RetrofitInstance.api.getPayToDate("Bearer ${getToken()}") },
-                { RetrofitInstance.api.getServices("Bearer ${getToken()}") },
-                { RetrofitInstance.api.getPays("Bearer ${getToken()}") }
-            )
-        ) { responses ->
-            val accountInfoResponse = responses[0] as? AccountInfo
-            val payToDateResponse = responses[1] as? PayToDate
-            val servicesResponse = responses[2] as? Services
-            val paysResponse = responses[3] as? Pays
+        currentState = state
+        resetError()
 
-            accountInfoResponse?.let {
-                it.payToDate = payToDateResponse
-                it.services = servicesResponse?.services ?: emptyList()
-                it.pays = paysResponse?.pays ?: emptyList()
-                accountInfo = it
-                isDataLoaded = true
+        viewModelScope.launch {
+            val token = getToken()
+            if (token.isNullOrEmpty()) {
+                setError("Токен не найден")
+                currentState = State.IDLE
+                return@launch
+            }
+
+            try {
+                val accountBody = handleResponse(
+                    request = { RetrofitInstance.api.getAccountInfo("Bearer $token") },
+                    defaultError = "Ошибка загрузки данных"
+                )
+
+                val payToDateBody = handleResponse(
+                    request = { RetrofitInstance.api.getPayToDate("Bearer $token") },
+                    defaultError = "Ошибка загрузки PayToDate"
+                )
+
+                val servicesBody = handleResponse(
+                    request = { RetrofitInstance.api.getServices("Bearer $token") },
+                    defaultError = "Ошибка загрузки списка услуг"
+                )
+
+                val paysBody = handleResponse(
+                    request = { RetrofitInstance.api.getPays("Bearer $token") },
+                    defaultError = "Ошибка загрузки платежей"
+                )
+
+                accountBody?.let {
+                    it.payToDate = payToDateBody
+                    it.services = servicesBody?.services ?: emptyList()
+                    it.pays = paysBody?.pays ?: emptyList()
+                    accountInfo = it
+                    isDataLoaded = true
+                }
+
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Error loading account info", e)
+                setError("Ошибка загрузки данных")
+            } finally {
+                currentState = State.IDLE
             }
         }
     }
 
     fun refreshAccountInfo() {
-        isDataLoaded = false // Reset the flag to force data reload
+        isDataLoaded = false
         loadAccountInfo(state = State.LOADING)
     }
 
     fun pullToRefreshAccountInfo() {
-        isDataLoaded = false // Reset the flag to force data reload
+        isDataLoaded = false
         loadAccountInfo(state = State.REFRESHING)
     }
 }
