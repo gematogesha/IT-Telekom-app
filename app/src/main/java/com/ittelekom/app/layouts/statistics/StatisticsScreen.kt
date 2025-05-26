@@ -271,7 +271,7 @@ fun CircularChartCard(groupedPayments: Map<String, Map<String, Double>>) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(bottom = 16.dp),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
