@@ -11,7 +11,7 @@ import com.ittelekom.app.network.RetrofitInstance
 import com.ittelekom.app.utils.TokenManager
 
 class LoginLogoutModel(application: Application) : BaseViewModel(application) {
-
+    //TODO implement login and logout
     fun login(context: Context, login: String, password: String, onComplete: (Boolean) -> Unit) {
         fetchData(
             state = State.LOADING_ITEM,
