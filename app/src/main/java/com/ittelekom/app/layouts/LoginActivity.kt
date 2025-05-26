@@ -110,8 +110,8 @@ fun LoginScreen() {
             color = MaterialTheme.colorScheme.surface,
             modifier = Modifier.fillMaxSize()
         ) {
-            var login by remember { mutableStateOf("703462697") }
-            var password by remember { mutableStateOf("o538ws8cze") }
+            var login by remember { mutableStateOf("") }
+            var password by remember { mutableStateOf("") }
             var isLoading by remember { mutableStateOf(false) }
             val context = LocalContext.current
 

@@ -7,8 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalanceWallet
@@ -22,7 +20,6 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Leaderboard
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -34,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -96,9 +92,11 @@ fun DashboardScreen() {
             composable("payment") {
                 PaymentScreen(viewModel = viewModel)
             }
+            /*
             composable("chat") {
                 ChatScreen(viewModel = viewModel)
             }
+             */
             composable("statistics") {
                 StatisticsScreen(viewModel = viewModel)
             }
@@ -113,8 +111,8 @@ fun DashboardScreen() {
 fun BottomNavigationBar(navController: NavHostController) {
     var selectedItem by remember { mutableIntStateOf(0) }
 
-    val items = listOf("Главная", "Оплата", "Чат", "Статистика", "Профиль")
-    val labels = listOf("home", "payment", "chat", "statistics", "profile")
+    val items = listOf("Главная", "Оплата", /*"Чат",*/ "Статистика", "Профиль")
+    val labels = listOf("home", "payment", /*"chat",*/ "statistics", "profile")
     val selectedIcons = listOf(Icons.Filled.Home, Icons.Filled.AccountBalanceWallet, Icons.Filled.ChatBubble, Icons.Filled.Leaderboard, Icons.Filled.Person)
     val unselectedIcons = listOf(Icons.Outlined.Home, Icons.Outlined.AccountBalanceWallet, Icons.Outlined.ChatBubbleOutline, Icons.Outlined.Leaderboard, Icons.Outlined.Person)
 
