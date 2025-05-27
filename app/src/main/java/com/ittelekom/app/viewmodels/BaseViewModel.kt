@@ -78,7 +78,6 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-
     private fun isInternetAvailable(): Boolean {
         val connectivityManager =
             getApplication<Application>().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
