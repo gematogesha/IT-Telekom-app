@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Response
 
-
 abstract class BaseViewModel(application: Application) : AndroidViewModel(application) {
     // Текущее состояние
     var currentState by mutableStateOf(State.IDLE)
