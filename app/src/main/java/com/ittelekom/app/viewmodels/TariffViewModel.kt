@@ -110,6 +110,7 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
         loadTariffInfo(state = State.REFRESHING)
     }
 
+    //TODO: Переделать на изменение тарифа
     fun changeTariff(tariffId: Int) {
         fetchData(
             state = State.LOADING_ITEM,

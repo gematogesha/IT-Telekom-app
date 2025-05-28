@@ -4,11 +4,11 @@ import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.models.PayToDate
 import com.ittelekom.app.models.Pays
 import com.ittelekom.app.models.Services
+import com.ittelekom.app.models.SetBlock
 import com.ittelekom.app.models.SetTariffResponse
 import com.ittelekom.app.models.Tariffs
 import okhttp3.ResponseBody
 import retrofit2.Response
-import retrofit2.http.Body
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
@@ -59,6 +59,11 @@ interface ApiService {
     suspend fun undoChangeTariff(
         @Header("Authorization") token: String
     ): Response<Unit>
+
+    @POST("accounts/setblock")
+    suspend fun setBlock(
+        @Header("Authorization") token: String
+    ): Response<SetBlock>
 
     @POST("remove_token")
     suspend fun logout(

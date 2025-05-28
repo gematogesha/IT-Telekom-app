@@ -33,6 +33,8 @@ private val LightColorScheme = lightColorScheme(
     onSurface = OnSurface,
     surfaceContainer = Container,
     surfaceContainerHigh = ContainerHighest,
+    surfaceContainerHighest = ContainerHighest,
+
 
     inverseSurface = InverseSurface,
     inverseOnSurface = InverseOnSurface,
@@ -61,6 +63,7 @@ private val DarkColorScheme = darkColorScheme(
     onSurface = DarkOnSurface,
     surfaceContainer = DarkContainer,
     surfaceContainerHigh = DarkContainerHighest,
+    surfaceContainerHighest = DarkContainerHighest,
 
     inverseSurface = DarkInverseSurface,
     inverseOnSurface = DarkInverseOnSurface,

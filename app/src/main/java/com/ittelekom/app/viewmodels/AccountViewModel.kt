@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.ittelekom.app.models.AccountInfo
 import com.ittelekom.app.models.MessageCarrier
+import com.ittelekom.app.models.SetBlock
 import com.ittelekom.app.network.RetrofitInstance
 import kotlinx.coroutines.launch
 import retrofit2.Response
@@ -17,12 +18,16 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
     var accountInfo by mutableStateOf<AccountInfo?>(null)
         private set
 
+    var setBlock by mutableStateOf<SetBlock?>(null)
+        private set
+
     var isDataLoaded by mutableStateOf(false)
         private set
 
     private inline fun <reified T> handleResponse(
         request: () -> Response<T>,
-        defaultError: String
+        defaultError: String,
+        showError: Boolean = true
     ): T? where T : MessageCarrier {
         val response = request()
 
@@ -36,17 +41,31 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
                 val errorObj = Gson().fromJson(errorBodyString, T::class.java)
                 val errorMessage = errorObj.message?.takeIf { it.isNotEmpty() }
                 val errorField = errorObj.error?.takeIf { it.isNotEmpty() }
+
+                val processedMessage = when (errorMessage) {
+                    "success" -> "Аккаунт успешно обновлен"
+                    else -> errorMessage
+                }
+
+                val processedError = when (errorField) {
+                    "Нечего разблокировать!" -> "Ошибка загрузки данных"
+                    else -> errorField
+                }
+
                 when {
-                    errorMessage != null -> {
-                        Log.w("handleResponse", "Server message: $errorMessage")
+                    processedMessage != null -> {
+                        Log.w("handleResponse", "Server message: $processedMessage")
+                        setError(processedMessage)
                         return errorObj
                     }
-                    errorField != null -> {
-                        Log.e("handleResponse", "Server error: $errorField")
+                    processedError != null -> {
+                        Log.e("handleResponse", "Server error: $processedError")
+                        setError(processedError)
                         return errorObj
                     }
                 }
             } catch (e: Exception) {
+                setError(defaultError)
                 Log.e("handleResponse", "Error parsing error body", e)
             }
         }
@@ -72,22 +91,26 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
             try {
                 val accountBody = handleResponse(
                     request = { RetrofitInstance.api.getAccountInfo("Bearer $token") },
-                    defaultError = "Ошибка загрузки данных"
+                    defaultError = "Ошибка загрузки данных",
+                    showError = false
                 )
 
                 val payToDateBody = handleResponse(
                     request = { RetrofitInstance.api.getPayToDate("Bearer $token") },
-                    defaultError = "Ошибка загрузки PayToDate"
+                    defaultError = "Ошибка загрузки PayToDate",
+                    showError = false
                 )
 
                 val servicesBody = handleResponse(
                     request = { RetrofitInstance.api.getServices("Bearer $token") },
-                    defaultError = "Ошибка загрузки списка услуг"
+                    defaultError = "Ошибка загрузки списка услуг",
+                    showError = false
                 )
 
                 val paysBody = handleResponse(
                     request = { RetrofitInstance.api.getPays("Bearer $token") },
-                    defaultError = "Ошибка загрузки платежей"
+                    defaultError = "Ошибка загрузки платежей",
+                    showError = false
                 )
 
                 accountBody?.let {
@@ -100,6 +123,41 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
 
             } catch (e: Exception) {
                 Log.e("AccountViewModel", "Error loading account info", e)
+                setError("Ошибка загрузки данных")
+            } finally {
+                currentState = State.IDLE
+            }
+        }
+    }
+
+    fun loadSetBlock(state: State) {
+        if (isDataLoaded && state != State.REFRESHING && state != State.LOADING_ITEM) return
+
+        currentState = state
+        resetError()
+
+        viewModelScope.launch {
+            val token = getToken()
+            if (token.isNullOrEmpty()) {
+                setError("Токен не найден")
+                currentState = State.IDLE
+                return@launch
+            }
+
+            try {
+                val setBlockBody = handleResponse(
+                    request = { RetrofitInstance.api.setBlock("Bearer $token") },
+                    defaultError = "Ошибка загрузки данных"
+                )
+
+                setBlockBody?.let {
+                    setBlock = it
+                    isDataLoaded = true
+                }
+
+
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Error set block", e)
                 setError("Ошибка загрузки данных")
             } finally {
                 currentState = State.IDLE

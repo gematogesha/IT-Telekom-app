@@ -101,6 +101,12 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
         errorMessage = null
     }
 
+    fun consumeError(): String? {
+        val error = errorMessage
+        errorMessage = null
+        return error
+    }
+
     enum class State {
         IDLE,
         LOADING,

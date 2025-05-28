@@ -89,6 +89,7 @@ fun PaymentScreen(viewModel: AccountViewModel) {
         if (errorMessage != null) {
             snackbarHostState.showSnackbar(errorMessage)
             Log.e("HomeScreen", "Error: $errorMessage")
+            viewModel.resetError()
         }
     }
 

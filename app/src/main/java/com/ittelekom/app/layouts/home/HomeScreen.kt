@@ -89,7 +89,7 @@ fun HomeScreen(viewModel: AccountViewModel) {
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
             snackbarHostState.showSnackbar(errorMessage)
-            Log.e("HomeScreen", "Error: $errorMessage")
+            viewModel.resetError()
         }
     }
 

@@ -58,6 +58,13 @@ data class PaysInfo(
     val volume: String
 )
 
+data class SetBlock(
+    override val message: String? = null,
+    override val error: String? = null
+) : MessageCarrier
+
+
+
 fun groupPayments(pays: List<PaysInfo>): Map<String, Map<String, Double>> {
     return pays.groupBy { it.caption }.mapValues { (_, group) ->
         group.groupBy { remark ->

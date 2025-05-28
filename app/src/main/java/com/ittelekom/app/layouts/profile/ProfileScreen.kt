@@ -2,6 +2,7 @@ package com.ittelekom.app.layouts.profile
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,7 +29,6 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.ManageAccounts
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,10 +42,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,23 +60,51 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ittelekom.app.components.ButtonLargeLoadingIndicator
 import com.ittelekom.app.components.ButtonLoadingIndicator
 import com.ittelekom.app.layouts.settings.SettingsActivity
 import com.ittelekom.app.utils.TokenManager
+import com.ittelekom.app.viewmodels.AccountViewModel
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.viewmodels.LoginLogoutModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(accountViewModel: AccountViewModel) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     val viewModel: LoginLogoutModel = viewModel()
+    val userBlock = accountViewModel.accountInfo?.userblock
+    Log.d("ProfileScreen", "userBlock: ${accountViewModel.accountInfo}")
+
+    var checked by remember { mutableStateOf(true) }
 
     val tokenManager = TokenManager.getInstance(context)
     val activeAccount = tokenManager.getActiveAccount()
-    val isLoading = viewModel.isLoadingItemState()
+    val isLoadingItem = viewModel.isLoadingItemState()
+    val isLoadingItemSetBlock = accountViewModel.isLoadingItemState()
+    val isRefreshing = viewModel.isLoadingItemState()
+
+    val setBlock = accountViewModel.setBlock
+    val errorMessage = viewModel.errorMessage
+    val errorMessageSetBlock = accountViewModel.errorMessage
+    var isInitialLoad by remember { mutableStateOf(true) }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(errorMessage)
+            viewModel.resetError()
+        }
+    }
+
+    LaunchedEffect(errorMessageSetBlock) {
+        errorMessageSetBlock?.let {
+            snackbarHostState.showSnackbar(errorMessageSetBlock)
+            accountViewModel.resetError()
+        }
+    }
 
     var expanded by remember { mutableStateOf(false) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -320,7 +352,8 @@ fun ProfileScreen() {
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 ) {
                                     Row(
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
@@ -339,22 +372,16 @@ fun ProfileScreen() {
                                                 text = "Блокировка аккаунта",
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 color = MaterialTheme.colorScheme.onSurface,
-
                                                 )
                                         }
-                                        IconButton(
-                                            onClick = {
-
-                                            },
-                                            modifier = Modifier.size(40.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.ChevronRight,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onSurface,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        }
+                                        SetBlockSwitch(
+                                            isBlocked = userBlock ?: false,
+                                            isLoading = isLoadingItemSetBlock,
+                                            onToggle = { checked ->
+                                                // запускаем загрузку и обновляем состояние
+                                                accountViewModel.loadSetBlock(BaseViewModel.State.LOADING_ITEM)
+                                            }
+                                        )
                                     }
                                 }
                             }
@@ -371,9 +398,9 @@ fun ProfileScreen() {
                                     onClick = {
                                         viewModel.logout(activeAccount)
                                     },
-                                    enabled = !isLoading,
+                                    enabled = !isLoadingItem,
                                 ) {
-                                    if (isLoading) {
+                                    if (isLoadingItem) {
                                         ButtonLoadingIndicator()
                                     } else {
                                         Icon(
@@ -393,5 +420,27 @@ fun ProfileScreen() {
             }
         }
     )
+}
+
+@Composable
+fun SetBlockSwitch(
+    isBlocked: Boolean,
+    isLoading: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Box(
+        modifier = Modifier.size(40.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            ButtonLargeLoadingIndicator()
+        } else {
+            Switch(
+                checked = isBlocked,
+                onCheckedChange = onToggle,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
 }
 

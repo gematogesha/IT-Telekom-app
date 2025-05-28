@@ -101,7 +101,7 @@ fun DashboardScreen() {
                 StatisticsScreen(viewModel = viewModel)
             }
             composable("profile") {
-                ProfileScreen()
+                ProfileScreen(accountViewModel = viewModel)
             }
         }
     }
