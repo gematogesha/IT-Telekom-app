@@ -118,7 +118,7 @@ fun ProfileManagerScreen(onBackPressed: () -> Unit) {
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = 16.dp),
+                                    .padding(vertical = 16.dp),
                                 shape = RoundedCornerShape(20.dp),
                                 elevation = CardDefaults.cardElevation(2.dp),
                                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)

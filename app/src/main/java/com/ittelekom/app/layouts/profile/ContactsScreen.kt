@@ -103,10 +103,10 @@ fun ContactsScreen(onBackPressed: () -> Unit) {
                             SelectionContainer {
                                 Card(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 16.dp),
+                                        .padding(vertical = 16.dp)
+                                        .fillMaxWidth(),
                                     shape = RoundedCornerShape(20.dp),
-                                    elevation = CardDefaults.cardElevation(6.dp),
+                                    elevation = CardDefaults.cardElevation(2.dp),
                                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                                 ) {
                                     Column(
