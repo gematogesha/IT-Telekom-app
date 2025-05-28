@@ -84,6 +84,8 @@ fun HomeScreen(viewModel: AccountViewModel) {
         }
     }
 
+    //TODO: Обработка ошибок у AccauntInfo.error
+
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
             snackbarHostState.showSnackbar(errorMessage)
