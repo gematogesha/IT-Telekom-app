@@ -84,7 +84,6 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
     val isRefreshing = viewModel.isRefreshingState()
     val isLoading = viewModel.isLoadingState()
     val isLoadingItem = viewModel.isLoadingItemState()
-    val isEnable by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         if (tariffs == null) viewModel.loadTariffInfo(BaseViewModel.State.LOADING)
@@ -156,7 +155,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                     if (isLoading) {
                         CustomLoadingIndicator()
                     } else {
-                        if (tariffs != null && accountInfo != null) {
+                        if (tariffs != null && accountInfo != null && tariffs.error == null) {
                             val tariffsList = tariffs.tariffs
                             val radioOptions = tariffsList.map { it.caption }
                             val initialSelectedOption =
