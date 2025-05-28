@@ -199,7 +199,7 @@ fun ProfileScreen() {
                             }
                         }
 
-                        item {
+                       /* item {
                             Card(
                                 modifier = Modifier
                                     .padding(bottom = 16.dp)
@@ -250,7 +250,7 @@ fun ProfileScreen() {
                                     }
                                 }
                             }
-                        }
+                        }*/
 
                         item {
                             Card(
