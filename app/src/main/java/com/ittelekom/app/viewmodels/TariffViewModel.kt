@@ -5,9 +5,14 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.ittelekom.app.models.MessageCarrier
 import com.ittelekom.app.models.SetTariffResponse
 import com.ittelekom.app.models.Tariffs
 import com.ittelekom.app.network.RetrofitInstance
+import kotlinx.coroutines.launch
+import retrofit2.Response
 
 class TariffViewModel(application: Application) : BaseViewModel(application) {
     var tariffs by mutableStateOf<Tariffs?>(null)
@@ -19,19 +24,78 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
     var isDataLoaded by mutableStateOf(false)
         private set
 
-    fun loadTariffInfo(state: State) {
-        if (isDataLoaded && state != State.REFRESHING) return
-        if (isDataLoaded && state != State.LOADING_ITEM) return
+    private inline fun <reified T> handleResponse(
+        request: () -> Response<T>,
+        defaultError: String
+    ): T? where T : MessageCarrier {
+        val response = request()
 
-        fetchData(
-            state = state,
-            requests = listOf(
-                { RetrofitInstance.api.getTariffs("Bearer ${getToken()}") }
-            )
-        ) { responses ->
-            val tariffResponse = responses[0] as? Tariffs
-            tariffResponse?.let {
-                tariffs = it
+        if (response.isSuccessful) {
+            return response.body()
+        }
+
+        val errorBodyString = response.errorBody()?.string()
+        if (!errorBodyString.isNullOrEmpty()) {
+            try {
+                val errorObj = Gson().fromJson(errorBodyString, T::class.java)
+                val errorMessage = errorObj.message?.takeIf { it.isNotEmpty() }
+                val errorField = errorObj.error?.takeIf { it.isNotEmpty() }
+
+                val processedError = when (errorField) {
+                    "Forbidden change tariff" -> "Нет доступных тарифов"
+                    else -> errorField
+                }
+
+                when {
+                    errorMessage != null -> {
+                        Log.w("handleResponse", "Server message: $errorMessage")
+                        return errorObj
+                    }
+                    processedError != null -> {
+                        Log.e("handleResponse", "Server error: $processedError")
+                        setError(processedError)
+                        return errorObj
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("handleResponse", "Error parsing error body", e)
+            }
+        }
+
+        setError(defaultError)
+        return null
+    }
+
+    fun loadTariffInfo(state: State) {
+        if (isDataLoaded && state != State.REFRESHING && state != State.LOADING_ITEM) return
+
+        currentState = state
+        resetError()
+
+        viewModelScope.launch {
+            val token = getToken()
+            if (token.isNullOrEmpty()) {
+                setError("Токен не найден")
+                currentState = State.IDLE
+                return@launch
+            }
+
+            try {
+                val tarrifBody = handleResponse(
+                    request = { RetrofitInstance.api.getTariffs("Bearer $token") },
+                    defaultError = "Ошибка загрузки тарифов"
+                )
+
+                tarrifBody?.let {
+                    tariffs = it
+                    isDataLoaded = true
+                }
+
+            } catch (e: Exception) {
+                Log.e("TariffViewModel", "Error loading tariff info", e)
+                setError("Ошибка загрузки данных")
+            } finally {
+                currentState = State.IDLE
             }
         }
     }

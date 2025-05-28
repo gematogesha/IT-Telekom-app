@@ -1,11 +1,11 @@
 package com.ittelekom.app.models
 
-import com.ittelekom.app.viewmodels.AccountViewModel
 import java.util.Locale
 
 
 interface MessageCarrier {
     val message: String?
+    val error: String?
 }
 
 data class AccountInfo(
@@ -21,17 +21,20 @@ data class AccountInfo(
     var payToDate: PayToDate? = null,
     var services: List<ServiceInfo> = emptyList(),
     var pays: List<PaysInfo> = emptyList(),
-    override val message: String? = null
+    override val message: String? = null,
+    override val error: String? = null
 ) : MessageCarrier
 
 data class PayToDate(
     val to_date: String? = null,
-    override val message: String? = null
+    override val message: String? = null,
+    override val error: String? = null
 ) : MessageCarrier
 
 data class Services(
     val services: List<ServiceInfo>,
-    override val message: String? = null
+    override val message: String? = null,
+    override val error: String? = null
 ) : MessageCarrier
 
 data class ServiceInfo(
@@ -44,7 +47,8 @@ data class ServiceInfo(
 
 data class Pays(
     val pays: List<PaysInfo>,
-    override val message: String? = null
+    override val message: String? = null,
+    override val error: String? = null
 ) : MessageCarrier
 
 data class PaysInfo(

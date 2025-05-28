@@ -8,12 +8,13 @@ data class TariffInfo(
 )
 
 data class Tariffs(
-    val tariffs: List<TariffInfo>
-)
+    val tariffs: List<TariffInfo>,
+    override val message: String? = null,
+    override val error: String? = null
+) : MessageCarrier
 
 data class SetTariffResponse(
     val success: Boolean,
-    val error: String,
-    val message: String,
-    val data: Any? // Уточните структуру ответа
-)
+    override val message: String? = null,
+    override val error: String? = null
+) : MessageCarrier

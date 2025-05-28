@@ -34,9 +34,17 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
         if (!errorBodyString.isNullOrEmpty()) {
             try {
                 val errorObj = Gson().fromJson(errorBodyString, T::class.java)
-                if (!errorObj.message.isNullOrEmpty()) {
-                    Log.w("handleResponse", "Server message: ${errorObj.message}")
-                    return errorObj // Возвращаем объект с message, чтобы в UI было доступно сообщение
+                val errorMessage = errorObj.message?.takeIf { it.isNotEmpty() }
+                val errorField = errorObj.error?.takeIf { it.isNotEmpty() }
+                when {
+                    errorMessage != null -> {
+                        Log.w("handleResponse", "Server message: $errorMessage")
+                        return errorObj
+                    }
+                    errorField != null -> {
+                        Log.e("handleResponse", "Server error: $errorField")
+                        return errorObj
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("handleResponse", "Error parsing error body", e)
