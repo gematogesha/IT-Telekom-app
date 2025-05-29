@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ErrorDisplay(
-    refreshFunction: () -> Unit,
     errorMessage: String?,
+    onRefreshClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     iconSize: Dp = 170.dp,
     textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyLarge,
@@ -35,21 +35,17 @@ fun ErrorDisplay(
     defaultErrorMessage: String = "Ошибка загрузки данных"
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = modifier
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 imageVector = getErrorIcon(errorMessage),
                 tint = iconTint,
                 contentDescription = "Error Icon",
-                modifier = Modifier
-                    .size(iconSize)
+                modifier = Modifier.size(iconSize)
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -58,13 +54,11 @@ fun ErrorDisplay(
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    refreshFunction()
+            if (onRefreshClick != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = onRefreshClick) {
+                    Text("Обновить")
                 }
-            ) {
-                Text("Обновить")
             }
         }
     }

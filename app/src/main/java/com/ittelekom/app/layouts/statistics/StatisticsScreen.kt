@@ -72,7 +72,6 @@ fun StatisticsScreen(viewModel: AccountViewModel) {
 
     val accountInfo = viewModel.accountInfo
     val groupedPayments = accountInfo?.let { groupPayments(it.pays) }
-    Log.d("StatisticsScreen", "groupedPayments: $groupedPayments")
     val errorMessage = viewModel.errorMessage
     val isRefreshing = viewModel.isRefreshingState()
     val isLoading = viewModel.isLoadingState()
@@ -95,11 +94,11 @@ fun StatisticsScreen(viewModel: AccountViewModel) {
         }
     }
 
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            Log.e("StatisticsScreen", "Error: $errorMessage")
-            viewModel.resetError()
+    LaunchedEffect(Unit) {
+        viewModel.errorFlow.collect { error ->
+            if (error.isNotBlank()) {
+                snackbarHostState.showSnackbar(error)
+            }
         }
     }
 
@@ -184,7 +183,7 @@ fun StatisticsScreen(viewModel: AccountViewModel) {
                                 }
                             } else if (errorMessage != null) {
                                 ErrorDisplay(
-                                    refreshFunction = { viewModel.refreshAccountInfo() },
+                                    onRefreshClick = { viewModel.refreshAccountInfo() },
                                     errorMessage = errorMessage,
                                     modifier = Modifier.align(Alignment.Center),
                                 )
