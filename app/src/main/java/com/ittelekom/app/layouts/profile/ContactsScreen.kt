@@ -65,12 +65,16 @@ class ContactsScreen : ComponentActivity() {
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ContactsScreen(onBackPressed: () -> Unit) {
-
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val context = LocalContext.current
 
+    // Вспомогательная функция для запуска интентов
+    fun launchIntent(uriString: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uriString))
+        context.startActivity(intent)
+    }
+
     Scaffold(
-        modifier = Modifier,
         topBar = {
             TopAppBar(
                 title = { Text("Контакты", maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -84,74 +88,52 @@ fun ContactsScreen(onBackPressed: () -> Unit) {
                 },
                 scrollBehavior = scrollBehavior
             )
-        },
-        content = { innerPadding ->
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    LazyColumn(
-                        contentPadding = innerPadding,
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        item {
-                            SelectionContainer {
-                                Card(
-                                    modifier = Modifier
-                                        .padding(vertical = 16.dp)
-                                        .fillMaxWidth(),
-                                    shape = RoundedCornerShape(20.dp),
-                                    elevation = CardDefaults.cardElevation(2.dp),
-                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
-                                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                                    ) {
+        }
+    ) { innerPadding ->
+        Surface(
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp)
+        ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                item {
+                    SelectionContainer {
+                        Card(
+                            modifier = Modifier
+                                .padding(vertical = 16.dp)
+                                .fillMaxWidth(),
+                            shape = RoundedCornerShape(20.dp),
+                            elevation = CardDefaults.cardElevation(2.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Text(
+                                    text = "г.Сургут, ул. 30 лет Победы, 56/2.",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
 
-                                        Text(
-                                            text = "г.Сургут, ул. 30 лет Победы, 56/2.",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
 
-                                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                                ContactRow(icon = Icons.Filled.Phone, contact = "+7 (3462) 77-94-93") {
+                                    launchIntent("tel:+73462779493")
+                                }
+                                ContactRow(icon = Icons.Filled.Phone, contact = "+7 (3462) 66-11-77") {
+                                    launchIntent("tel:+73462661177")
+                                }
 
-                                        // Телефоны
-                                        ContactRow(icon = Icons.Filled.Phone, contact = "+7 (3462) 77-94-93") {
-                                            val intent = Intent(Intent.ACTION_DIAL).apply {
-                                                data = Uri.parse("tel:+73462779493")
-                                            }
-                                            context.startActivity(intent)
-                                        }
-                                        ContactRow(icon = Icons.Filled.Phone, contact = "+7 (3462) 66-11-77") {
-                                            val intent = Intent(Intent.ACTION_DIAL).apply {
-                                                data = Uri.parse("tel:+73462661177")
-                                            }
-                                            context.startActivity(intent)
-                                        }
+                                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
 
-                                        HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
-
-                                        // Email
-                                        ContactRow(icon = Icons.Filled.Email, contact = "info@ok-internet.ru") {
-                                            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                                data = Uri.parse("mailto:info@ok-internet.ru")
-                                            }
-                                            context.startActivity(intent)
-                                        }
-                                        ContactRow(icon = Icons.Filled.Email, contact = "sales@ok-internet.ru") {
-                                            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                                data = Uri.parse("mailto:sales@ok-internet.ru")
-                                            }
-                                            context.startActivity(intent)
-                                        }
-                                    }
+                                ContactRow(icon = Icons.Filled.Email, contact = "info@ok-internet.ru") {
+                                    launchIntent("mailto:info@ok-internet.ru")
+                                }
+                                ContactRow(icon = Icons.Filled.Email, contact = "sales@ok-internet.ru") {
+                                    launchIntent("mailto:sales@ok-internet.ru")
                                 }
                             }
                         }
@@ -159,7 +141,7 @@ fun ContactsScreen(onBackPressed: () -> Unit) {
                 }
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -167,9 +149,8 @@ fun ContactRow(icon: ImageVector, contact: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable(onClick = onClick)
             .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
