@@ -24,58 +24,15 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
     var isDataLoaded by mutableStateOf(false)
         private set
 
-    private inline fun <reified T> handleResponse(
-        request: () -> Response<T>,
-        defaultError: String,
-        showError: Boolean = true
-    ): T? where T : MessageCarrier {
-        val response = request()
-
-        if (response.isSuccessful) {
-            return response.body()
-        }
-
-        val errorBodyString = response.errorBody()?.string()
-        if (!errorBodyString.isNullOrEmpty()) {
-            try {
-                val errorObj = Gson().fromJson(errorBodyString, T::class.java)
-                val errorMessage = errorObj.message?.takeIf { it.isNotEmpty() }
-                val errorField = errorObj.error?.takeIf { it.isNotEmpty() }
-
-                val processedMessage = when (errorMessage) {
-                    "success" -> "Аккаунт успешно обновлен"
-                    else -> errorMessage
-                }
-
-                val processedError = when (errorField) {
-                    "Нечего разблокировать!" -> "Ошибка загрузки данных"
-                    else -> errorField
-                }
-
-                when {
-                    processedMessage != null -> {
-                        Log.w("handleResponse", "Server message: $processedMessage")
-                        setError(processedMessage)
-                        return errorObj
-                    }
-                    processedError != null -> {
-                        Log.e("handleResponse", "Server error: $processedError")
-                        setError(processedError)
-                        return errorObj
-                    }
-                }
-            } catch (e: Exception) {
-                setError(defaultError)
-                Log.e("handleResponse", "Error parsing error body", e)
-            }
-        }
-
-        setError(defaultError)
-        return null
-    }
-
     fun loadAccountInfo(state: State) {
-        if (isDataLoaded && state != State.REFRESHING && state != State.LOADING_ITEM) return
+
+        if (!isInternetAvailable()) {
+            setError("Нет подключения к интернету")
+            currentState = State.IDLE
+            return
+        }
+
+        if (isDataLoaded && state !in listOf(State.REFRESHING, State.LOADING_ITEM)) return
 
         currentState = state
         resetError()
@@ -92,35 +49,38 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
                 val accountBody = handleResponse(
                     request = { RetrofitInstance.api.getAccountInfo("Bearer $token") },
                     defaultError = "Ошибка загрузки данных",
-                    showError = false
+                    showError = false,
+                    showMessage = false
                 )
 
                 val payToDateBody = handleResponse(
                     request = { RetrofitInstance.api.getPayToDate("Bearer $token") },
                     defaultError = "Ошибка загрузки PayToDate",
-                    showError = false
+                    showError = false,
+                    showMessage = false
                 )
 
                 val servicesBody = handleResponse(
                     request = { RetrofitInstance.api.getServices("Bearer $token") },
                     defaultError = "Ошибка загрузки списка услуг",
-                    showError = false
+                    showError = false,
+                    showMessage = false
                 )
 
                 val paysBody = handleResponse(
                     request = { RetrofitInstance.api.getPays("Bearer $token") },
                     defaultError = "Ошибка загрузки платежей",
-                    showError = false
+                    showError = false,
+                    showMessage = false
                 )
 
                 accountBody?.let {
                     it.payToDate = payToDateBody
-                    it.services = servicesBody?.services ?: emptyList()
-                    it.pays = paysBody?.pays ?: emptyList()
+                    it.services = servicesBody?.services.orEmpty()
+                    it.pays = paysBody?.pays.orEmpty()
                     accountInfo = it
                     isDataLoaded = true
                 }
-
             } catch (e: Exception) {
                 Log.e("AccountViewModel", "Error loading account info", e)
                 setError("Ошибка загрузки данных")
@@ -131,7 +91,13 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
     }
 
     fun loadSetBlock(state: State) {
-        if (isDataLoaded && state != State.REFRESHING && state != State.LOADING_ITEM) return
+        if (isDataLoaded && state !in listOf(State.REFRESHING, State.LOADING_ITEM)) return
+
+        if (!isInternetAvailable()) {
+            setError("Нет подключения к интернету")
+            currentState = State.IDLE
+            return
+        }
 
         currentState = state
         resetError()
@@ -154,8 +120,6 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
                     setBlock = it
                     isDataLoaded = true
                 }
-
-
             } catch (e: Exception) {
                 Log.e("AccountViewModel", "Error set block", e)
                 setError("Ошибка загрузки данных")
@@ -167,11 +131,11 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
 
     fun refreshAccountInfo() {
         isDataLoaded = false
-        loadAccountInfo(state = State.LOADING)
+        loadAccountInfo(State.LOADING)
     }
 
     fun pullToRefreshAccountInfo() {
         isDataLoaded = false
-        loadAccountInfo(state = State.REFRESHING)
+        loadAccountInfo(State.REFRESHING)
     }
 }
