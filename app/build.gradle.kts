@@ -14,10 +14,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 3
-        val version = "1.0.2-beta.1"
-        val buildType = "Release"
-        val releaseDate = "30.05.2025"
-        versionName = "$buildType $version ($releaseDate)"
+        versionName = "1.0.2-beta.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -29,10 +26,14 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            versionNameSuffix = "-release"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            versionNameSuffix = "-debug"
         }
     }
     compileOptions {
