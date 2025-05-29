@@ -13,10 +13,10 @@ android {
         applicationId = "com.ittelekom.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        val version = "1.0.2"
+        versionCode = 3
+        val version = "1.0.3-beta.1"
         val buildType = "Release"
-        val releaseDate = "28.05.2025"
+        val releaseDate = "30.05.2025"
         versionName = "$buildType $version ($releaseDate)"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
