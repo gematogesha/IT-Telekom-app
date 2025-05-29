@@ -24,50 +24,14 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
     var isDataLoaded by mutableStateOf(false)
         private set
 
-    private inline fun <reified T> handleResponse(
-        request: () -> Response<T>,
-        defaultError: String
-    ): T? where T : MessageCarrier {
-        val response = request()
-
-        if (response.isSuccessful) {
-            return response.body()
-        }
-
-        val errorBodyString = response.errorBody()?.string()
-        if (!errorBodyString.isNullOrEmpty()) {
-            try {
-                val errorObj = Gson().fromJson(errorBodyString, T::class.java)
-                val errorMessage = errorObj.message?.takeIf { it.isNotEmpty() }
-                val errorField = errorObj.error?.takeIf { it.isNotEmpty() }
-
-                val processedError = when (errorField) {
-                    "Forbidden change tariff" -> "Нет доступных тарифов"
-                    else -> errorField
-                }
-
-                when {
-                    errorMessage != null -> {
-                        Log.w("handleResponse", "Server message: $errorMessage")
-                        return errorObj
-                    }
-                    processedError != null -> {
-                        Log.e("handleResponse", "Server error: $processedError")
-                        setError(processedError)
-                        return errorObj
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("handleResponse", "Error parsing error body", e)
-            }
-        }
-
-        setError(defaultError)
-        return null
-    }
-
     fun loadTariffInfo(state: State) {
         if (isDataLoaded && state != State.REFRESHING && state != State.LOADING_ITEM) return
+
+        if (!isInternetAvailable()) {
+            setError("Нет подключения к интернету")
+            currentState = State.IDLE
+            return
+        }
 
         currentState = state
         resetError()
