@@ -5,7 +5,6 @@ import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -63,6 +62,7 @@ import com.ittelekom.app.utils.TokenManager
 import com.ittelekom.app.viewmodels.AccountViewModel
 import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.viewmodels.LoginLogoutModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -70,39 +70,34 @@ import com.ittelekom.app.viewmodels.LoginLogoutModel
 fun ProfileScreen(accountViewModel: AccountViewModel) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-
     val viewModel: LoginLogoutModel = viewModel()
-    val userBlock = accountViewModel.accountInfo?.userblock
 
-    var checked by remember { mutableStateOf(true) }
-
-    val tokenManager = TokenManager.getInstance(context)
-    val activeAccount = tokenManager.getActiveAccount()
-    val isLoadingItem = viewModel.isLoadingItemState()
-    val isLoadingItemSetBlock = accountViewModel.isLoadingItemState()
-    val isRefreshing = viewModel.isLoadingItemState()
-
-    val setBlock = accountViewModel.setBlock
-    val errorMessage = viewModel.errorMessage
-    val errorMessageSetBlock = accountViewModel.errorMessage
-    var isInitialLoad by remember { mutableStateOf(true) }
-
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            snackbarHostState.showSnackbar(errorMessage)
-            viewModel.resetError()
-        }
-    }
-
-    LaunchedEffect(errorMessageSetBlock) {
-        errorMessageSetBlock?.let {
-            snackbarHostState.showSnackbar(errorMessageSetBlock)
-            accountViewModel.resetError()
-        }
-    }
+    val userBlock = accountViewModel.accountInfo?.userblock ?: false
+    val isLoadingLogout = viewModel.isLoadingItemState()
+    val isLoadingBlock = accountViewModel.isLoadingItemState()
 
     var expanded by remember { mutableStateOf(false) }
+
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    LaunchedEffect(Unit) {
+        launch {
+            accountViewModel.errorFlow.collect { error ->
+                if (error.isNotBlank()) {
+                    snackbarHostState.showSnackbar(error)
+                }
+            }
+        }
+        launch {
+            viewModel.errorFlow.collect { error ->
+                if (error.isNotBlank()) {
+                    snackbarHostState.showSnackbar(error)
+                }
+            }
+        }
+
+    }
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -111,302 +106,164 @@ fun ProfileScreen(accountViewModel: AccountViewModel) {
                     Text(text = "Профиль", maxLines = 1, overflow = TextOverflow.Ellipsis)
                 },
                 actions = {
-                    IconButton(
-                        onClick = { expanded = true }
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(imageVector = Icons.Filled.MoreVert, contentDescription = "Меню")
+                    }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.MoreVert,
-                            contentDescription = "Localized description"
+                        DropdownMenuItem(
+                            leadingIcon = {
+                                Icon(imageVector = Icons.Rounded.ManageAccounts, contentDescription = "Управление аккаунтом")
+                            },
+                            text = { Text("Управление аккаунтом") },
+                            onClick = {
+                                expanded = false
+                                context.startActivity(Intent(context, ProfileManagerActivity::class.java))
+                            }
+                        )
+                        DropdownMenuItem(
+                            leadingIcon = {
+                                Icon(imageVector = Icons.Rounded.Settings, contentDescription = "Настройки")
+                            },
+                            text = { Text("Настройки") },
+                            onClick = {
+                                expanded = false
+                                context.startActivity(Intent(context, SettingsActivity::class.java))
+                            }
                         )
                     }
                 },
                 scrollBehavior = scrollBehavior
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         content = { innerPadding ->
             Surface(
                 color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.fillMaxSize()
             ) {
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 52.dp)
-                        .wrapContentSize(Alignment.TopEnd)
-                ) {
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                    ) {
-                        DropdownMenuItem(
-                            //modifier = Modifier.width(200.dp),
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.ManageAccounts,
-                                    contentDescription = "Account Manager",
-                                )
-                            },
-                            text = {
-                                Text(
-                                    text = "Управление аккаунтом",
-                                )
-                            },
-                            onClick = {
-                                expanded = false
-                                val intent = Intent(context, ProfileManagerActivity()::class.java)
-                                context.startActivity(intent)
-                            }
-                        )
-                        DropdownMenuItem(
-                            //modifier = Modifier.width(200.dp),
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Settings,
-                                    contentDescription = "Settings",
-                                )
-                            },
-                            text = {
-                                Text(
-                                    text = "Настройки",
-                                )
-                            },
-                            onClick = {
-                                expanded = false
-                                val intent = Intent(context, SettingsActivity::class.java)
-                                context.startActivity(intent)
-                            }
-                        )
-                    }
-                }
-                Box(
+                LazyColumn(
+                    contentPadding = innerPadding,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 16.dp)
                 ) {
-                    LazyColumn(
-                        contentPadding = innerPadding,
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        item {
-                            Row (
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.Center
+                    // Аватар
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(104.dp)
+                                    .background(MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(bottom = 16.dp)
-                                        .size(104.dp)
-                                        .background(MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Person,
-                                        contentDescription = "User Icon",
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        modifier = Modifier.size(64.dp)
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.Rounded.Person,
+                                    contentDescription = "User Icon",
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.size(64.dp)
+                                )
                             }
                         }
-
-                        item {
+                    }
+                    // Имя пользователя
+                    item {
+                        val activeAccount = TokenManager.getInstance(context).getActiveAccount()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            if (activeAccount != null) {
+                                Text(
+                                    text = activeAccount,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                    // Контакты
+                    item {
+                        ProfileCard(
+                            icon = Icons.Outlined.Contacts,
+                            text = "Контакты",
+                            onClick = {
+                                context.startActivity(Intent(context, ContactsScreen::class.java)) // поменяй на твой активити
+                            }
+                        )
+                    }
+                    // Блокировка аккаунта
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .fillMaxWidth(),
+                            shape = RoundedCornerShape(20.dp),
+                            elevation = CardDefaults.cardElevation(2.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = 32.dp),
-                                horizontalArrangement = Arrangement.Center,
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                if (activeAccount != null) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Lock,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = activeAccount,
-                                        style = MaterialTheme.typography.titleLarge,
+                                        text = "Блокировка аккаунта",
+                                        style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                 }
+                                SetBlockSwitch(
+                                    isBlocked = userBlock,
+                                    isLoading = isLoadingBlock,
+                                    onToggle = { checked ->
+                                        accountViewModel.loadSetBlock(BaseViewModel.State.LOADING_ITEM)
+                                    }
+                                )
                             }
                         }
-
-                       /* item {
-                            Card(
-                                modifier = Modifier
-                                    .padding(bottom = 16.dp)
-                                    .fillMaxWidth(),
-                                shape = RoundedCornerShape(20.dp),
-                                elevation = CardDefaults.cardElevation(2.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                    }
+                    // Кнопка Выйти
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .padding(vertical = 24.dp)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Button(
+                                onClick = {
+                                    val activeAccount = TokenManager.getInstance(context).getActiveAccount()
+                                    viewModel.logout(activeAccount)
+                                },
+                                enabled = !isLoadingLogout,
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ){
-                                            Icon(
-                                                imageVector = Icons.Rounded.Tune,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-
-                                            Text(
-                                                text = "Дополнительные услуги",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.onSurface,
-
-                                                )
-                                        }
-                                        IconButton(
-                                            onClick = {
-
-                                            },
-                                            modifier = Modifier.size(40.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Outlined.ChevronRight,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onSurface,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }*/
-
-                        item {
-                            Card(
-                                modifier = Modifier
-                                    .padding(bottom = 16.dp)
-                                    .fillMaxWidth(),
-                                shape = RoundedCornerShape(20.dp),
-                                elevation = CardDefaults.cardElevation(2.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ){
-                                            Icon(
-                                                imageVector = Icons.Outlined.Contacts,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-
-                                            Text(
-                                                text = "Контакты",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.onSurface,
-
-                                                )
-                                        }
-                                        IconButton(
-                                            onClick = {
-                                                expanded = false
-                                                val intent = Intent(context, ContactsScreen()::class.java)
-                                                context.startActivity(intent)
-                                            },
-                                            modifier = Modifier.size(40.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.ChevronRight,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.onSurface,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        item {
-                            Card(
-                                modifier = Modifier
-                                    .padding(bottom = 16.dp)
-                                    .fillMaxWidth(),
-                                shape = RoundedCornerShape(20.dp),
-                                elevation = CardDefaults.cardElevation(2.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ){
-                                            Icon(
-                                                imageVector = Icons.Rounded.Lock,
-                                                contentDescription = null,
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(8.dp))
-
-                                            Text(
-                                                text = "Блокировка аккаунта",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                                )
-                                        }
-                                        SetBlockSwitch(
-                                            isBlocked = userBlock ?: false,
-                                            isLoading = isLoadingItemSetBlock,
-                                            onToggle = { checked ->
-                                                // запускаем загрузку и обновляем состояние
-                                                accountViewModel.loadSetBlock(BaseViewModel.State.LOADING_ITEM)
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        item {
-                            Row (
-                                modifier = Modifier
-                                    .padding(top = 16.dp)
-                                    .fillMaxSize(),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Button(
-                                    onClick = {
-                                        viewModel.logout(activeAccount)
-                                    },
-                                    enabled = !isLoadingItem,
-                                ) {
-                                    if (isLoadingItem) {
-                                        ButtonLoadingIndicator()
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Rounded.Logout,
-                                            contentDescription = "Logout",
-                                            tint = MaterialTheme.colorScheme.onPrimary,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("Выйти")
-                                    }
+                                if (isLoadingLogout) {
+                                    ButtonLoadingIndicator()
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Rounded.Logout,
+                                        contentDescription = "Logout",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Выйти")
                                 }
                             }
                         }
@@ -416,6 +273,36 @@ fun ProfileScreen(accountViewModel: AccountViewModel) {
         }
     )
 }
+
+@Composable
+fun ProfileCard(icon: ImageVector, text: String, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .padding(vertical = 8.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = text, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            }
+            IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
+                Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
+            }
+        }
+    }
+}
+
 
 @Composable
 fun SetBlockSwitch(
