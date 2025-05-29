@@ -14,7 +14,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 3
-        val version = "1.0.3-beta.1"
+        val version = "1.0.2-beta.1"
         val buildType = "Release"
         val releaseDate = "30.05.2025"
         versionName = "$buildType $version ($releaseDate)"
