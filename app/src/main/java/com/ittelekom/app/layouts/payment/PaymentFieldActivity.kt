@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -52,6 +53,8 @@ import com.ittelekom.app.ui.util.ErrorDisplay
 import com.ittelekom.app.viewmodels.AccountViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -77,36 +80,40 @@ fun PaymentFieldScreen(onBackPressed: () -> Unit) {
     val viewModel: AccountViewModel = viewModel()
     val context = LocalContext.current
 
-    var message by remember { mutableStateOf("") }
+    // Локальное сообщение для ошибок валидации (например, "Заполните все поля")
+    var localErrorMessage by remember { mutableStateOf("") }
 
     val accountInfo = viewModel.accountInfo
-    val errorMessage = viewModel.errorMessage
-    val isRefreshing = viewModel.isRefreshingState()
     val isLoading = viewModel.isLoadingState()
-    var state by remember { mutableStateOf(false) }
 
+    // Подписываемся на ошибки из viewModel.errorFlow
     LaunchedEffect(Unit) {
-        viewModel.loadAccountInfo(BaseViewModel.State.LOADING)
+        launch {
+            viewModel.errorFlow.collectLatest { msg ->
+                if (msg.isNotBlank()) snackbarHostState.showSnackbar(msg)
+            }
+        }
+        // Подписка на локальные ошибки валидации
+        launch {
+            snapshotFlow { localErrorMessage }
+                .filter { it.isNotBlank() }
+                .collect {
+                    snackbarHostState.showSnackbar(it)
+                    localErrorMessage = ""
+                }
+        }
     }
 
-    LaunchedEffect(message) {
-        if (message.isNotBlank()) {
-            snackbarHostState.showSnackbar(message)
-            message = ""
-        }
+    // Запрос данных при первом отображении
+    LaunchedEffect(Unit) {
+        viewModel.loadAccountInfo(BaseViewModel.State.LOADING)
     }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Оплата",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
+                title = { Text(text = "Оплата", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
                         Icon(
@@ -129,12 +136,12 @@ fun PaymentFieldScreen(onBackPressed: () -> Unit) {
                     .fillMaxSize()
                     .padding(all = 16.dp),
             ) {
-                if (isLoading) {
-                    CustomLoadingIndicator()
-                } else {
-                    if (accountInfo != null) {
+                when {
+                    isLoading -> CustomLoadingIndicator()
+                    accountInfo != null -> {
                         var phoneNumber by remember { mutableStateOf("") }
                         var sumPay by remember { mutableStateOf("") }
+                        var isButtonLoading by remember { mutableStateOf(false) }
 
                         LazyColumn(
                             contentPadding = innerPadding,
@@ -168,8 +175,7 @@ fun PaymentFieldScreen(onBackPressed: () -> Unit) {
                                             contentDescription = "Sum pay",
                                         )
                                     },
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth(),
                                     singleLine = true
                                 )
                             }
@@ -178,19 +184,16 @@ fun PaymentFieldScreen(onBackPressed: () -> Unit) {
                                     onClick = {
                                         when {
                                             phoneNumber.isBlank() || sumPay.isBlank() -> {
-                                                message = "Заполните все поля"
+                                                localErrorMessage = "Заполните все поля"
                                             }
-
                                             !phoneNumber.matches(Regex("^\\d{10,15}\$")) -> {
-                                                message = "Введите корректный номер телефона"
+                                                localErrorMessage = "Введите корректный номер телефона"
                                             }
-
                                             !sumPay.matches(Regex("^\\d+(\\.\\d{1,2})?\$")) -> {
-                                                message = "Введите корректную сумму"
+                                                localErrorMessage = "Введите корректную сумму"
                                             }
-
                                             else -> {
-                                                state = true
+                                                isButtonLoading = true
                                                 CoroutineScope(Dispatchers.IO).launch {
                                                     try {
                                                         val response = StatsRetrofitInstance.api.submitData(
@@ -201,30 +204,31 @@ fun PaymentFieldScreen(onBackPressed: () -> Unit) {
                                                             addPayYooKassaBtn = "true"
                                                         )
                                                         withContext(Dispatchers.Main) {
+                                                            isButtonLoading = false
                                                             if (response.isSuccessful) {
-                                                                state = false
-                                                                message = "Перенаправление на страницу оплаты"
+                                                                localErrorMessage = "Перенаправление на страницу оплаты"
 
+                                                                // Пример парсинга URL из тела (лучше заменить на реальный)
                                                                 val regex = Regex("url=(https?://[^}]+)")
-                                                                val matchResult = regex.find(
-                                                                    response.toString()
-                                                                )
+                                                                val matchResult = regex.find(response.toString())
                                                                 val extractedUrl = matchResult?.groupValues?.get(1)
 
-                                                                val intent =
-                                                                    Intent(Intent.ACTION_VIEW).setData(
-                                                                        Uri.parse(extractedUrl))
-                                                                context.startActivity(intent)
+                                                                extractedUrl?.let { url ->
+                                                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                                                    context.startActivity(intent)
+                                                                } ?: run {
+                                                                    localErrorMessage = "Не удалось получить ссылку для оплаты"
+                                                                }
 
                                                             } else {
-                                                                state = false
-                                                                message = "Ошибка: ${response.message()}"
+                                                                localErrorMessage = "Ошибка: ${response.message()}"
                                                             }
                                                         }
                                                     } catch (e: Exception) {
                                                         withContext(Dispatchers.Main) {
                                                             Log.e("StatsData", "Ошибка: ${e.message}")
-                                                            message = "Ошибка при оплате"
+                                                            localErrorMessage = "Ошибка при оплате"
+                                                            isButtonLoading = false
                                                         }
                                                     }
                                                 }
@@ -234,24 +238,23 @@ fun PaymentFieldScreen(onBackPressed: () -> Unit) {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(top = 24.dp, start = 40.dp, end = 40.dp),
-                                    enabled = !state,
+                                    enabled = !isButtonLoading,
                                 ) {
-                                    if(state) {
+                                    if (isButtonLoading) {
                                         ButtonLoadingIndicator()
                                     } else {
-                                        Text(
-                                            text = "Оплатить",
-                                        )
+                                        Text(text = "Оплатить")
                                     }
-
                                 }
                             }
                         }
-                    } else if (errorMessage != null) {
+                    }
+                    else -> {
+                        // Если accountInfo == null и ошибка загрузки (показываем ErrorDisplay с возможностью обновить)
                         ErrorDisplay(
-                            refreshFunction = { viewModel.refreshAccountInfo() },
-                            errorMessage = errorMessage,
-                            modifier = Modifier.align(Alignment.Center),
+                            onRefreshClick = { viewModel.refreshAccountInfo() },
+                            errorMessage = viewModel.errorMessage ?: "Ошибка загрузки данных",
+                            modifier = Modifier.align(Alignment.Center)
                         )
                     }
                 }
