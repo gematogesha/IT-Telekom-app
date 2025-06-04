@@ -27,6 +27,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -117,7 +118,7 @@ fun ContactsScreen(onBackPressed: () -> Unit) {
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
 
-                                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
 
                                 ContactRow(icon = Icons.Filled.Phone, contact = "+7 (3462) 77-94-93") {
                                     launchIntent("tel:+73462779493")
@@ -126,7 +127,7 @@ fun ContactsScreen(onBackPressed: () -> Unit) {
                                     launchIntent("tel:+73462661177")
                                 }
 
-                                Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+                                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
 
                                 ContactRow(icon = Icons.Filled.Email, contact = "info@ok-internet.ru") {
                                     launchIntent("mailto:info@ok-internet.ru")

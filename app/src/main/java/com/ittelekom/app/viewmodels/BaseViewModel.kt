@@ -64,6 +64,7 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
                 val errorField = errorObj.error?.takeIf { it.isNotEmpty() }
 
                 val processedMessage = when (errorMessage) {
+                    "" -> ""
                     else -> errorMessage
                 }
 
