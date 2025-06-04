@@ -1,7 +1,6 @@
 package com.ittelekom.app.layouts.home
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -25,7 +24,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -44,15 +42,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.ButtonLoadingIndicator
 import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.ui.util.ErrorDisplay
 import com.ittelekom.app.viewmodels.AccountViewModel
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.viewmodels.TariffViewModel
-import kotlinx.coroutines.flow.collectLatest
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -80,9 +77,6 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val tariffChangeMessage = viewModel.tariffChangeMessage
-    val isTariffChangeSuccessful = viewModel.isTariffChangeSuccessful
-
     val errorMessage = viewModel.errorMessage
     val isRefreshing = viewModel.isRefreshingState()
     val isLoading = viewModel.isLoadingState()
@@ -101,8 +95,8 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
         }
     }
 
-    // Отслеживаем сообщение об изменении тарифа с кнопкой отмены
-    LaunchedEffect(tariffChangeMessage) {
+    // TODO: Добавить отображение ошибки изменения тарифа
+    /*LaunchedEffect(tariffChangeMessage) {
         tariffChangeMessage?.let {
             val result = snackbarHostState.showSnackbar(
                 withDismissAction = isTariffChangeSuccessful,
@@ -112,9 +106,8 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
             if (result == SnackbarResult.ActionPerformed && isTariffChangeSuccessful) {
                 viewModel.undoChangeTariff()
             }
-            viewModel.clearTariffChangeMessage()
         }
-    }
+    }*/
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 

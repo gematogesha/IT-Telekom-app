@@ -6,20 +6,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
-import com.ittelekom.app.models.MessageCarrier
-import com.ittelekom.app.models.SetTariffResponse
 import com.ittelekom.app.models.Tariffs
 import com.ittelekom.app.network.RetrofitInstance
 import kotlinx.coroutines.launch
-import retrofit2.Response
 
 class TariffViewModel(application: Application) : BaseViewModel(application) {
     var tariffs by mutableStateOf<Tariffs?>(null)
-        private set
-    var tariffChangeMessage by mutableStateOf<String?>(null)
-        private set
-    var isTariffChangeSuccessful by mutableStateOf(false)
         private set
     var isDataLoaded by mutableStateOf(false)
         private set
@@ -41,16 +33,17 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
             if (token.isNullOrEmpty()) {
                 setError("Токен не найден")
                 currentState = State.IDLE
+                proceedToLogout(getApplication())
                 return@launch
             }
 
             try {
-                val tarrifBody = handleResponse(
+                val tariffBody = handleResponse(
                     request = { RetrofitInstance.api.getTariffs("Bearer $token") },
                     defaultError = "Ошибка загрузки тарифов"
                 )
 
-                tarrifBody?.let {
+                tariffBody?.let {
                     tariffs = it
                     isDataLoaded = true
                 }
@@ -74,49 +67,14 @@ class TariffViewModel(application: Application) : BaseViewModel(application) {
         loadTariffInfo(state = State.REFRESHING)
     }
 
-    //TODO: Переделать на изменение тарифа
+    //TODO: Добавить проверку на успешность ответа изменения тарифа
     fun changeTariff(tariffId: Int) {
-        fetchData(
-            state = State.LOADING_ITEM,
-            requests = listOf { RetrofitInstance.api.setTariff("Bearer ${getToken()}", tariffId) }
-        ) { responses ->
-            val response = responses[0] as? SetTariffResponse
-            if (response != null) {
-                if (response.success) {
-                    tariffChangeMessage = "Тариф успешно изменен"
-                    isTariffChangeSuccessful = true
-                } else {
-                    tariffChangeMessage = "Не удалось изменить тариф"
-                    isTariffChangeSuccessful = false
-                }
-                loadTariffInfo(State.IDLE)
-            } else {
-                tariffChangeMessage = "Не удалось изменить тариф"
-                isTariffChangeSuccessful = false
-            }
-        }
+
     }
 
-    //TODO: Добавить проверку на успешность ответа
+    //TODO: Добавить проверку на успешность ответа отмены изменения тарифа
     fun undoChangeTariff() {
-        fetchData(
-            state = State.LOADING_ITEM,
-            requests = listOf { RetrofitInstance.api.undoChangeTariff("Bearer ${getToken()}") }
-        ) { responses ->
-            val response = responses[0]
-            if (response != null) {
-                tariffChangeMessage = "Смена тарифа отменена"
-                isTariffChangeSuccessful = false
-                loadTariffInfo(State.LOADING_ITEM) // Обновляем тарифы после отмены смены
-            } else {
-                tariffChangeMessage = "Не удалось отменить смену тарифа"
-            }
-        }
-    }
 
-    fun clearTariffChangeMessage() {
-        tariffChangeMessage = null
-        isTariffChangeSuccessful = false
     }
 
 }
