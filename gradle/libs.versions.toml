@@ -4,7 +4,6 @@ agp = "8.7.3"
 converterGson = "2.9.0"
 coreSplashscreen = "1.0.1"
 gson = "2.10.1"
-jetbrainsKotlinxCoroutinesAndroid = "1.9.0"
 kotlin = "1.9.0"
 coreKtx = "1.16.0"
 junit = "4.13.2"
@@ -49,13 +48,13 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 #noinspection SimilarGradleDependency
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
 #noinspection SimilarGradleDependency
-kotlinx-coroutines-android-v173 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "jetbrainsKotlinxCoroutinesAndroid" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 androidx-storage = { group = "androidx.test.services", name = "storage", version.ref = "storageVersion" }
 generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
+retrofit2-converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "converterGson" }
 
 
 [plugins]
