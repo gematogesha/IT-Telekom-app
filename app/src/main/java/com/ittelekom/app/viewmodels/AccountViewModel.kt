@@ -6,13 +6,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
 import com.ittelekom.app.models.AccountInfo
-import com.ittelekom.app.models.MessageCarrier
 import com.ittelekom.app.models.SetBlock
 import com.ittelekom.app.network.RetrofitInstance
 import kotlinx.coroutines.launch
-import retrofit2.Response
 
 open class AccountViewModel(application: Application) : BaseViewModel(application) {
     var accountInfo by mutableStateOf<AccountInfo?>(null)
@@ -42,6 +39,7 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
             if (token.isNullOrEmpty()) {
                 setError("Токен не найден")
                 currentState = State.IDLE
+                proceedToLogout(getApplication())
                 return@launch
             }
 
@@ -55,21 +53,21 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
 
                 val payToDateBody = handleResponse(
                     request = { RetrofitInstance.api.getPayToDate("Bearer $token") },
-                    defaultError = "Ошибка загрузки PayToDate",
+                    defaultError = "",
                     showError = false,
                     showMessage = false
                 )
 
                 val servicesBody = handleResponse(
                     request = { RetrofitInstance.api.getServices("Bearer $token") },
-                    defaultError = "Ошибка загрузки списка услуг",
+                    defaultError = "",
                     showError = false,
                     showMessage = false
                 )
 
                 val paysBody = handleResponse(
                     request = { RetrofitInstance.api.getPays("Bearer $token") },
-                    defaultError = "Ошибка загрузки платежей",
+                    defaultError = "",
                     showError = false,
                     showMessage = false
                 )
@@ -107,6 +105,7 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
             if (token.isNullOrEmpty()) {
                 setError("Токен не найден")
                 currentState = State.IDLE
+                proceedToLogout(getApplication())
                 return@launch
             }
 
@@ -119,6 +118,45 @@ open class AccountViewModel(application: Application) : BaseViewModel(applicatio
                 setBlockBody?.let {
                     setBlock = it
                     isDataLoaded = true
+                }
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Error set block", e)
+                setError("Ошибка загрузки данных")
+            } finally {
+                currentState = State.IDLE
+            }
+        }
+    }
+
+    fun changeMac(state: State, mac: String, onSuccess: () -> Unit = {}) {
+        if (isDataLoaded && state !in listOf(State.REFRESHING, State.LOADING_ITEM)) return
+
+        if (!isInternetAvailable()) {
+            setError("Нет подключения к интернету")
+            currentState = State.IDLE
+            return
+        }
+
+        currentState = state
+        resetError()
+
+        viewModelScope.launch {
+            val token = getToken()
+            if (token.isNullOrEmpty()) {
+                setError("Токен не найден")
+                currentState = State.IDLE
+                proceedToLogout(getApplication())
+                return@launch
+            }
+
+            try {
+                val setMacBody = handleResponse(
+                    request = { RetrofitInstance.api.setMac("Bearer $token", mac) },
+                    defaultError = "Ошибка загрузки данных"
+                )
+                setMacBody?.let {
+                    isDataLoaded = true
+                    onSuccess()
                 }
             } catch (e: Exception) {
                 Log.e("AccountViewModel", "Error set block", e)
