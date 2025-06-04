@@ -63,6 +63,15 @@ data class SetBlock(
     override val error: String? = null
 ) : MessageCarrier
 
+data class SetMac(
+    override val message: String? = null,
+    override val error: String? = null
+) : MessageCarrier
+
+data class Logout(
+    override val message: String? = null,
+    override val error: String? = null
+) : MessageCarrier
 
 
 fun groupPayments(pays: List<PaysInfo>): Map<String, Map<String, Double>> {
