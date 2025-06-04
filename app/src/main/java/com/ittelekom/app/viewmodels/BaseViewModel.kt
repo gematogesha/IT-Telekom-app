@@ -2,6 +2,7 @@ package com.ittelekom.app.viewmodels
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
@@ -11,13 +12,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.models.MessageCarrier
 import com.ittelekom.app.utils.TokenManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import retrofit2.Response
 
 abstract class BaseViewModel(application: Application) : AndroidViewModel(application) {
@@ -29,14 +29,13 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
     private val _errorFlow = MutableSharedFlow<String>()
     val errorFlow = _errorFlow.asSharedFlow()
 
-    data class ErrorMessage(val message: String?)
-
     /**
-     * Универсальный метод для выполнения списка запросов с обработкой состояний и ошибок.
+     * Универсальный метод для выполнения запроса с обработкой состояний и ошибок.
      *
-     * @param state состояние для установки во время выполнения.
-     * @param requests список suspend функций с запросами.
-     * @param onSuccess вызывается, если все запросы успешны, с результатами.
+     * @param request suspend-функция, выполняющая запрос и возвращающая Response<T>
+     * @param defaultError сообщение об ошибке по умолчанию, если запрос не удался
+     * @param showMessage флаг, указывающий нужно ли показывать сообщение от сервера (`message`)
+     * @param showError флаг, указывающий нужно ли показывать ошибку от сервера (`error`)
      */
 
     protected inline fun <reified T> handleResponse(
@@ -65,12 +64,13 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
                 val errorField = errorObj.error?.takeIf { it.isNotEmpty() }
 
                 val processedMessage = when (errorMessage) {
-                    "success" -> "Аккаунт успешно обновлен"
                     else -> errorMessage
                 }
 
                 val processedError = when (errorField) {
                     "Нечего разблокировать!" -> "Ошибка загрузки данных"
+                    "Forbidden change tariff" -> "Нет доступных тарифов"
+                    "You not loggin or token incorrect." -> "Вы не вошли в систему"
                     else -> errorField
                 }
 
@@ -97,58 +97,6 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
         return null
     }
 
-
-    //TODO: Удалить
-    protected fun fetchData(
-        state: State,
-        requests: List<suspend () -> Response<out Any>>,
-        onSuccess: (List<Any?>) -> Unit
-    ) {
-        if (!isInternetAvailable()) {
-            setError("Нет подключения к интернету")
-            currentState = State.IDLE
-            return
-        }
-
-        currentState = state
-
-        viewModelScope.launch {
-            resetError()
-
-            try {
-                val responses = withContext(Dispatchers.IO) {
-                    requests.map { it() }
-                }
-
-                val firstError = responses.firstOrNull { !it.isSuccessful }
-                if (firstError == null) {
-                    onSuccess(responses.map { it.body() })
-                } else {
-                    val errorMsg = parseError(firstError)
-                    Log.e("BaseViewModel", "Ошибка загрузки: ${firstError.code()} ${firstError.message()}")
-
-                    setError(errorMsg ?: "Ошибка загрузки данных")
-                }
-            } catch (e: Exception) {
-                Log.e("BaseViewModel", "Исключение при загрузке данных", e)
-                setError("Ошибка загрузки данных")
-            } finally {
-                currentState = State.IDLE
-            }
-        }
-    }
-
-    private fun parseError(response: Response<*>): String? {
-        return try {
-            response.errorBody()?.string()?.let { errorJson ->
-                Gson().fromJson(errorJson, ErrorMessage::class.java).message
-            }
-        } catch (e: Exception) {
-            Log.e("BaseViewModel", "Ошибка парсинга тела ошибки", e)
-            null
-        }
-    }
-
     fun isInternetAvailable(): Boolean {
         val connectivityManager = getApplication<Application>()
             .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -167,6 +115,12 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
     fun setError(message: String) {
         errorMessage = message
         emitError(message)
+    }
+
+    fun proceedToLogout(context: Context) {
+        val intent = Intent(context, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        context.startActivity(intent)
     }
 
     private fun emitError(message: String) {

@@ -36,7 +36,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.ittelekom.app.layouts.chat.ChatScreen
+// import com.ittelekom.app.layouts.chat.ChatScreen
 import com.ittelekom.app.layouts.home.HomeScreen
 import com.ittelekom.app.layouts.payment.PaymentScreen
 import com.ittelekom.app.layouts.profile.ProfileScreen

@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,9 +47,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ittelekom.app.components.ButtonLoadingIndicator
 import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.utils.TokenManager
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.viewmodels.LoginLogoutModel
 
 class ProfileManagerActivity : ComponentActivity() {
@@ -75,7 +78,17 @@ fun ProfileManagerScreen(onBackPressed: () -> Unit) {
     val accounts = tokenManager.getAllAccounts()
     val activeAccount = tokenManager.getActiveAccount()
 
+    val isLoadingItem = viewModel.isLoadingItemState()
+
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    LaunchedEffect(Unit) {
+        viewModel.errorFlow.collect { error ->
+            if (error.isNotBlank()) {
+                snackbarHostState.showSnackbar(error)
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -97,14 +110,16 @@ fun ProfileManagerScreen(onBackPressed: () -> Unit) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(horizontal = 16.dp)
             ) {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxSize()) {
                     item {
                         AccountsCard(
                             accounts = accounts,
                             activeAccount = activeAccount,
-                            onLogout = { account -> viewModel.logout(account) }
+                            onLogout = { account -> viewModel.logout(BaseViewModel.State.LOADING_ITEM, account) },
+                            isLoadingItem = isLoadingItem
                         )
                     }
                     item {
@@ -125,9 +140,10 @@ fun ProfileManagerScreen(onBackPressed: () -> Unit) {
 private fun AccountsCard(
     accounts: Set<String>,
     activeAccount: String?,
-    onLogout: (String) -> Unit
+    onLogout: (String) -> Unit,
+    isLoadingItem: Boolean = false
 ) {
-    val accountsList = accounts.toList() // <-- Преобразуем Set в List для индексов
+    val accountsList = accounts.toList()
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -148,7 +164,8 @@ private fun AccountsCard(
                 AccountRow(
                     account = account,
                     isActive = account == activeAccount,
-                    onLogout = { onLogout(account) }
+                    onLogout = { onLogout(account) },
+                    isLoading = isLoadingItem
                 )
                 if (index < accountsList.lastIndex) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
@@ -159,7 +176,7 @@ private fun AccountsCard(
 }
 
 @Composable
-private fun AccountRow(account: String, isActive: Boolean, onLogout: () -> Unit) {
+private fun AccountRow(account: String, isActive: Boolean, onLogout: () -> Unit, isLoading: Boolean = false) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -183,12 +200,16 @@ private fun AccountRow(account: String, isActive: Boolean, onLogout: () -> Unit)
             }
         }
         IconButton(onClick = onLogout, modifier = Modifier.size(40.dp)) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Logout",
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(24.dp)
-            )
+            if (isLoading) {
+                ButtonLoadingIndicator()
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Logout",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }
