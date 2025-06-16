@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,7 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -204,13 +202,6 @@ fun LoginScreen() {
                         Text("Войти")
                     }
                 }
-
-                Text(
-                    text = "Нет аккаунта? Зарегистрируйтесь",
-                    modifier = Modifier
-                        .clickable { /* Логика для перехода на экран регистрации */ },
-                    fontSize = 16.sp
-                )
             }
         }
     }
