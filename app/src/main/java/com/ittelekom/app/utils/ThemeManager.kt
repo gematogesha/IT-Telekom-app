@@ -1,8 +1,5 @@
-import android.app.Application
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 
 object ThemeManager {
     private const val PREFS_NAME = "app_preferences"

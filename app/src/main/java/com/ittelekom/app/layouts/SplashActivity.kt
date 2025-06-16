@@ -15,7 +15,6 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.res.painterResource
 import com.ittelekom.app.R
 
-//TODO: Сделать Splash Screen
 
 @SuppressLint("CustomSplashScreen")
 class SplashActivity : ComponentActivity() {

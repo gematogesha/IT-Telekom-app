@@ -35,3 +35,19 @@ fun ButtonLoadingIndicator(
         strokeWidth = strokeWidth,
     )
 }
+
+@Composable
+fun ButtonLargeLoadingIndicator(
+    color: Color = MaterialTheme.colorScheme.primary,
+    strokeWidth: Dp = 2.dp
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        CircularProgressIndicator(
+            modifier = Modifier
+                .size(32.dp)
+                .align(Alignment.CenterEnd),
+            color = color,
+            strokeWidth = strokeWidth,
+        )
+    }
+}

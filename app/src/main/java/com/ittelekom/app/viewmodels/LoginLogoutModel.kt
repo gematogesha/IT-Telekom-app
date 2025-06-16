@@ -2,79 +2,113 @@ package com.ittelekom.app.viewmodels
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.util.Log
-import androidx.activity.ComponentActivity
-import com.ittelekom.app.layouts.DashboardActivity
-import com.ittelekom.app.layouts.LoginActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
+import com.ittelekom.app.models.Logout
 import com.ittelekom.app.network.RetrofitInstance
 import com.ittelekom.app.utils.TokenManager
+import kotlinx.coroutines.launch
 
 class LoginLogoutModel(application: Application) : BaseViewModel(application) {
-    //TODO implement login and logout
-    fun login(context: Context, login: String, password: String, onComplete: (Boolean) -> Unit) {
-        fetchData(
-            state = State.LOADING_ITEM,
-            requests = listOf(
-                { RetrofitInstance.api.login(login, password) }
-            )
-        ) { responses ->
-            val response = responses[0]
 
-            if (response.toString().isNotEmpty()) {
-                TokenManager.getInstance(getApplication()).saveToken(login, response.toString())
-                TokenManager.getInstance(context).setActiveAccount(login)
+    var isDataLoaded by mutableStateOf(false)
+        private set
 
-                context.startActivity(
-                    Intent(context, DashboardActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    }
-                )
-                (context as? ComponentActivity)?.finish()
-                onComplete(true)
-            } else {
-                Log.e("LoginError", "Token is null or empty")
-                onComplete(false)
-            }
-        }
-    }
+    var logout by mutableStateOf<Logout?>(null)
+        private set
 
-    fun logout(account: String?) {
-        val tokenManager = TokenManager.getInstance(getApplication())
-        val token = account?.let { tokenManager.getToken(it) }
+    fun login(state: State, login: String, password: String, context: Context, onSuccess: () -> Unit = {}) {
+        if (isDataLoaded && state !in listOf(State.REFRESHING, State.LOADING_ITEM)) return
 
-        if (token == null) {
-            Log.e("Logout", "Токен отсутствует")
-            proceedToLogout(getApplication())
+        if (!isInternetAvailable()) {
+            setError("Нет подключения к интернету")
+            currentState = State.IDLE
             return
         }
 
-        fetchData(
-            state = State.LOADING_ITEM,
-            requests = listOf { RetrofitInstance.api.logout("Bearer $token") }
-        ) { responses ->
-            val response = responses[0]
+        currentState = state
+        resetError()
 
-            if (response != null && account != null) {
-                tokenManager.removeToken(account)
-                val remainingAccounts = tokenManager.getAllAccounts()
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.login(login, password)
 
-                if (remainingAccounts.isNotEmpty()) {
-                    tokenManager.setActiveAccount(remainingAccounts.first())
-                    AccountViewModel(getApplication()).refreshAccountInfo()
+                if (response.isSuccessful && response.body() != null) {
+                    val token = response.body()!!.string().trim()
+                    TokenManager.getInstance(context).saveToken(login, token)
+                    TokenManager.getInstance(context).setActiveAccount(login)
+                    isDataLoaded = true
+                    onSuccess()
                 } else {
-                    proceedToLogout(getApplication())
+                    setError("Ошибка входа")
                 }
-            } else {
-                Log.e("Logout", "Не удалось выполнить выход")
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Ошибка входа", e)
+                setError("Ошибка загрузки данных")
+            } finally {
+                currentState = State.IDLE
             }
         }
     }
 
-    private fun proceedToLogout(context: Context) {
-        val intent = Intent(context, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        context.startActivity(intent)
+    fun logout(state: State, account: String?) {
+        if (isDataLoaded && state !in listOf(State.REFRESHING, State.LOADING_ITEM)) return
+
+        if (!isInternetAvailable()) {
+            setError("Нет подключения к интернету")
+            currentState = State.IDLE
+            return
+        }
+
+        currentState = state
+        resetError()
+
+        viewModelScope.launch {
+            val token = getToken()
+            if (token.isNullOrEmpty()) {
+                setError("Токен не найден")
+                currentState = State.IDLE
+                proceedToLogout(getApplication())
+                return@launch
+            }
+
+            val tokenManager = TokenManager.getInstance(getApplication())
+
+            try {
+                val logoutBody = handleResponse(
+                    request = { RetrofitInstance.api.logout("Bearer $token") },
+                    defaultError = "Не удалось выполнить выход",
+                )
+
+                logoutBody?.let {
+                    logout = it
+
+                    if (account != null) {
+                        tokenManager.removeToken(account)
+                    }
+
+                    val remainingAccounts = tokenManager.getAllAccounts()
+
+                    if (remainingAccounts.isNotEmpty()) {
+                        tokenManager.setActiveAccount(remainingAccounts.first())
+                        AccountViewModel(getApplication()).refreshAccountInfo()
+                    } else {
+                        proceedToLogout(getApplication())
+                    }
+
+                    isDataLoaded = true
+                }
+            } catch (e: Exception) {
+                Log.e("AccountViewModel", "Error set block", e)
+                setError("Ошибка загрузки данных")
+            } finally {
+                currentState = State.IDLE
+            }
+        }
     }
+
 
 }

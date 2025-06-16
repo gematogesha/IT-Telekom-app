@@ -7,32 +7,36 @@ android {
     namespace = "com.ittelekom.app"
     compileSdkVersion(rootProject.extra["compileSdkVersion"] as Int)
 
+    lint {
+        disable.add("NullSafeMutableLiveData")
+    }
 
-    
     defaultConfig {
         applicationId = "com.ittelekom.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        val version = "1.0.1"
-        val buildType = "Release"
-        val releaseDate = "27.05.2025"
-        versionName = "$buildType $version ($releaseDate)"
+        versionCode = 4
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+        signingConfig = signingConfigs.getByName("debug")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
+            versionNameSuffix = "-release"
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            versionNameSuffix = "-debug"
         }
     }
     compileOptions {
@@ -79,6 +83,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.generativeai)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.retrofit2.converter.scalars)
 
     // Зависимости для тестирования
     testImplementation(libs.junit)

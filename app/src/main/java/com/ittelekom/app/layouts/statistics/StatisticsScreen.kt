@@ -94,10 +94,11 @@ fun StatisticsScreen(viewModel: AccountViewModel) {
         }
     }
 
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            Log.e("StatisticsScreen", "Error: $errorMessage")
+    LaunchedEffect(Unit) {
+        viewModel.errorFlow.collect { error ->
+            if (error.isNotBlank()) {
+                snackbarHostState.showSnackbar(error)
+            }
         }
     }
 
@@ -182,7 +183,7 @@ fun StatisticsScreen(viewModel: AccountViewModel) {
                                 }
                             } else if (errorMessage != null) {
                                 ErrorDisplay(
-                                    refreshFunction = { viewModel.refreshAccountInfo() },
+                                    onRefreshClick = { viewModel.refreshAccountInfo() },
                                     errorMessage = errorMessage,
                                     modifier = Modifier.align(Alignment.Center),
                                 )

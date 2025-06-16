@@ -6,7 +6,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,13 +45,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ittelekom.app.components.ButtonLoadingIndicator
 import com.ittelekom.app.layouts.LoginActivity
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.utils.TokenManager
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.viewmodels.LoginLogoutModel
 
 class ProfileManagerActivity : ComponentActivity() {
@@ -66,23 +66,30 @@ class ProfileManagerActivity : ComponentActivity() {
     }
 }
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ProfileManagerScreen(onBackPressed: () -> Unit) {
-
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val viewModel: LoginLogoutModel = viewModel()
-
 
     val tokenManager = TokenManager.getInstance(context)
     val accounts = tokenManager.getAllAccounts()
     val activeAccount = tokenManager.getActiveAccount()
 
+    val isLoadingItem = viewModel.isLoadingItemState()
+
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    LaunchedEffect(Unit) {
+        viewModel.errorFlow.collect { error ->
+            if (error.isNotBlank()) {
+                snackbarHostState.showSnackbar(error)
+            }
+        }
+    }
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -90,117 +97,37 @@ fun ProfileManagerScreen(onBackPressed: () -> Unit) {
                 title = { Text("Управление аккаунтом", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBackPressed) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 scrollBehavior = scrollBehavior
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         content = { innerPadding ->
             Surface(
                 color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    LazyColumn(
-                        contentPadding = innerPadding,
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        item {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 16.dp),
-                                shape = RoundedCornerShape(20.dp),
-                                elevation = CardDefaults.cardElevation(2.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .padding(horizontal = 18.dp, vertical = 16.dp),
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 16.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = "Доступные аккаунты",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-
-                                    accounts.forEachIndexed  { index, account ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = account,
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    fontWeight = FontWeight.Normal,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-
-                                                if (account == activeAccount){
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Icon(
-                                                        imageVector = Icons.Outlined.Check,
-                                                        contentDescription = null,
-                                                        tint = MaterialTheme.colorScheme.onSurface,
-                                                        modifier = Modifier.size(24.dp)
-                                                    )
-                                                }
-                                            }
-                                            IconButton(
-                                                onClick = {
-                                                    viewModel.logout(account)
-                                                },
-                                                modifier = Modifier.size(40.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Delete,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.onSurface,
-                                                    modifier = Modifier.size(24.dp)
-                                                )
-                                            }
-                                        }
-
-                                        if (index < accounts.size - 1) {
-                                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                                        }
-                                    }
-                                }
+                LazyColumn(modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxSize()) {
+                    item {
+                        AccountsCard(
+                            accounts = accounts,
+                            activeAccount = activeAccount,
+                            onLogout = { account -> viewModel.logout(BaseViewModel.State.LOADING_ITEM, account) },
+                            isLoadingItem = isLoadingItem
+                        )
+                    }
+                    item {
+                        AddAccountButton {
+                            val intent = Intent(context, LoginActivity::class.java).apply {
+                                putExtra("isAddingAccount", true)
                             }
-                        }
-                        item {
-                            Button(
-                                modifier = Modifier
-                                    .padding(vertical = 16.dp)
-                                    .fillMaxWidth(),
-                                onClick = {
-                                val intent = Intent(context, LoginActivity::class.java)
-                                intent.putExtra("isAddingAccount", true)
-                                context.startActivity(intent)
-                            }) {
-                                Text("Добавить аккаунт")
-                            }
+                            context.startActivity(intent)
                         }
                     }
                 }
@@ -208,4 +135,95 @@ fun ProfileManagerScreen(onBackPressed: () -> Unit) {
         }
     )
 }
+
+@Composable
+private fun AccountsCard(
+    accounts: Set<String>,
+    activeAccount: String?,
+    onLogout: (String) -> Unit,
+    isLoadingItem: Boolean = false
+) {
+    val accountsList = accounts.toList()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
+            Text(
+                text = "Доступные аккаунты",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            accountsList.forEachIndexed { index, account ->
+                AccountRow(
+                    account = account,
+                    isActive = account == activeAccount,
+                    onLogout = { onLogout(account) },
+                    isLoading = isLoadingItem
+                )
+                if (index < accountsList.lastIndex) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccountRow(account: String, isActive: Boolean, onLogout: () -> Unit, isLoading: Boolean = false) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = account,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (isActive) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Outlined.Check,
+                    contentDescription = "Active Account",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+        IconButton(onClick = onLogout, modifier = Modifier.size(40.dp)) {
+            if (isLoading) {
+                ButtonLoadingIndicator()
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Logout",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddAccountButton(onClick: () -> Unit) {
+    Button(
+        modifier = Modifier
+            .padding(vertical = 16.dp)
+            .fillMaxWidth(),
+        onClick = onClick
+    ) {
+        Text("Добавить аккаунт")
+    }
+}
+
 

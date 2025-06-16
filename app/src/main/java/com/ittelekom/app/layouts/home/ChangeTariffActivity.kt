@@ -1,7 +1,6 @@
 package com.ittelekom.app.layouts.home
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -25,7 +24,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -44,13 +42,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.ButtonLoadingIndicator
 import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.ui.theme.ITTelekomTheme
 import com.ittelekom.app.ui.util.ErrorDisplay
 import com.ittelekom.app.viewmodels.AccountViewModel
+import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.viewmodels.TariffViewModel
 import java.text.NumberFormat
 import java.util.Locale
@@ -75,30 +73,30 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
     val accountViewModel: AccountViewModel = viewModel()
 
     val tariffs = viewModel.tariffs
-    val snackbarHostState = remember { SnackbarHostState() }
-    val tariffChangeMessage = viewModel.tariffChangeMessage
-    val isTariffChangeSuccessful = viewModel.isTariffChangeSuccessful
-
     val accountInfo = accountViewModel.accountInfo
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val errorMessage = viewModel.errorMessage
     val isRefreshing = viewModel.isRefreshingState()
     val isLoading = viewModel.isLoadingState()
     val isLoadingItem = viewModel.isLoadingItemState()
-    val isEnable by remember { mutableStateOf(true) }
 
+    // Загружаем данные при первом запуске
     LaunchedEffect(Unit) {
         if (tariffs == null) viewModel.loadTariffInfo(BaseViewModel.State.LOADING)
         if (accountInfo == null) accountViewModel.loadAccountInfo(BaseViewModel.State.LOADING)
-    }
 
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            Log.e("ChangeTariffScreen", "Error: $it")
+        // Отслеживаем поток ошибок и показываем снэкбар
+        viewModel.errorFlow.collect { error ->
+            if (error.isNotBlank()) {
+                snackbarHostState.showSnackbar(error)
+            }
         }
     }
 
-    LaunchedEffect(tariffChangeMessage) {
+    // TODO: Добавить отображение ошибки изменения тарифа
+    /*LaunchedEffect(tariffChangeMessage) {
         tariffChangeMessage?.let {
             val result = snackbarHostState.showSnackbar(
                 withDismissAction = isTariffChangeSuccessful,
@@ -108,11 +106,11 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
             if (result == SnackbarResult.ActionPerformed && isTariffChangeSuccessful) {
                 viewModel.undoChangeTariff()
             }
-            viewModel.clearTariffChangeMessage()
         }
-    }
+    }*/
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -137,6 +135,7 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
+
         PullRefresh(
             refreshing = isRefreshing,
             enabled = true,
@@ -145,56 +144,60 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+
             Surface(
                 color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier.fillMaxSize()
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) {
-                    if (isLoading) {
-                        CustomLoadingIndicator()
-                    } else {
-                        if (tariffs != null && accountInfo != null) {
+                Box(modifier = Modifier.fillMaxSize()) {
+
+                    when {
+                        isLoading -> CustomLoadingIndicator()
+
+                        tariffs != null && accountInfo != null && tariffs.error == null -> {
+
                             val tariffsList = tariffs.tariffs
                             val radioOptions = tariffsList.map { it.caption }
-                            val initialSelectedOption =
-                                accountInfo.tariff_caption.takeIf { it in radioOptions }
-                                    ?: radioOptions.firstOrNull() ?: ""
-                            var selectedOption by remember { mutableStateOf(initialSelectedOption) }
 
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                            ) {
-                                item {
-                                    if (tariffsList.isNotEmpty()) {
+                            // Запоминаем выбранный тариф
+                            var selectedOption by remember {
+                                mutableStateOf(
+                                    accountInfo.tariff_caption.takeIf { it in radioOptions }
+                                        ?: radioOptions.firstOrNull().orEmpty()
+                                )
+                            }
+
+                            if (tariffsList.isEmpty()) {
+                                Text(
+                                    text = "Нет доступных тарифов",
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            } else {
+                                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                                    item {
                                         Column(Modifier.selectableGroup()) {
                                             tariffsList.forEach { tariff ->
+
                                                 val isCurrentTariff = tariff.caption == accountInfo.tariff_caption
-                                                val formattedSpeed =
-                                                    tariff.speed.replace("[.*]+$".toRegex(), "")
+
+                                                // Форматируем скорость и абонплату
+                                                val formattedSpeed = tariff.speed.replace("[.*]+$".toRegex(), "")
                                                 val formattedAbonplata = tariff.abonplata
                                                     .replace("\u00a0", "")
                                                     .replace("руб.", "")
                                                     .trim()
                                                     .toDoubleOrNull()
                                                     ?.let {
-                                                        NumberFormat.getNumberInstance(
-                                                            Locale(
-                                                                "ru",
-                                                                "RU"
-                                                            )
-                                                        ).apply {
+                                                        NumberFormat.getNumberInstance(Locale("ru", "RU")).apply {
                                                             maximumFractionDigits = 0
                                                         }.format(it) + " ₽"
                                                     } ?: "N/A"
 
                                                 Row(
-                                                    Modifier
+                                                    modifier = Modifier
                                                         .fillMaxWidth()
                                                         .selectable(
-                                                            selected = (tariff.caption == selectedOption),
+                                                            selected = tariff.caption == selectedOption,
                                                             onClick = {
                                                                 if (!isCurrentTariff) selectedOption = tariff.caption
                                                             },
@@ -205,12 +208,16 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                                 ) {
                                                     ListItem(
                                                         headlineContent = {
-                                                            Text(tariff.caption + if (isCurrentTariff) " (Активный)" else "")
+                                                            Text(
+                                                                tariff.caption + if (isCurrentTariff) " (Активный)" else ""
+                                                            )
                                                         },
-                                                        supportingContent = { Text("Скорость: $formattedSpeed, Абон. плата: $formattedAbonplata") },
+                                                        supportingContent = {
+                                                            Text("Скорость: $formattedSpeed, Абон. плата: $formattedAbonplata")
+                                                        },
                                                         leadingContent = {
                                                             RadioButton(
-                                                                selected = (tariff.caption == selectedOption),
+                                                                selected = tariff.caption == selectedOption,
                                                                 onClick = null
                                                             )
                                                         }
@@ -218,49 +225,38 @@ fun ChangeTariffScreen(onBackPressed: () -> Unit) {
                                                 }
                                             }
                                         }
+
                                         Box(
                                             modifier = Modifier
                                                 .fillMaxSize()
                                                 .padding(top = 16.dp, start = 40.dp, end = 40.dp),
                                         ) {
                                             Button(
-                                                modifier = Modifier
-                                                    .fillMaxWidth(),
+                                                modifier = Modifier.fillMaxWidth(),
                                                 enabled = !isLoadingItem,
                                                 onClick = {
-                                                    tariffsList.find { it.caption == selectedOption }
-                                                        ?.let { selectedTariff ->
-                                                            viewModel.changeTariff(
-                                                                selectedTariff.id
-                                                            )
-                                                        }
-                                                },
+                                                    tariffsList.find { it.caption == selectedOption }?.let { selectedTariff ->
+                                                        viewModel.changeTariff(selectedTariff.id)
+                                                    }
+                                                }
                                             ) {
-                                                if(isLoadingItem) {
+                                                if (isLoadingItem) {
                                                     ButtonLoadingIndicator()
                                                 } else {
-                                                    Text(
-                                                        text = "Сменить тариф",
-                                                    )
+                                                    Text("Сменить тариф")
                                                 }
-
                                             }
                                         }
-                                    } else {
-                                        Text(
-                                            text = "Нет доступных тарифов",
-                                            modifier = Modifier.padding(16.dp)
-                                        )
                                     }
                                 }
                             }
-                        } else if (errorMessage != null) {
-                            ErrorDisplay(
-                                refreshFunction = { viewModel.refreshTariffInfo() },
-                                errorMessage = errorMessage,
-                                modifier = Modifier.align(Alignment.Center),
-                            )
                         }
+
+                        errorMessage != null -> ErrorDisplay(
+                            onRefreshClick = { viewModel.refreshTariffInfo() },
+                            errorMessage = errorMessage,
+                            modifier = Modifier.align(Alignment.Center),
+                        )
                     }
                 }
             }

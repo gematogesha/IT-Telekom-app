@@ -2,12 +2,10 @@ package com.ittelekom.app.layouts.home
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.ittelekom.app.viewmodels.BaseViewModel
 import com.ittelekom.app.components.CustomLoadingIndicator
 import com.ittelekom.app.components.PullRefresh
 import com.ittelekom.app.layouts.LoginActivity
@@ -52,6 +49,7 @@ import com.ittelekom.app.ui.util.AccountSelectCard
 import com.ittelekom.app.ui.util.ErrorDisplay
 import com.ittelekom.app.utils.TokenManager
 import com.ittelekom.app.viewmodels.AccountViewModel
+import com.ittelekom.app.viewmodels.BaseViewModel
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -61,16 +59,17 @@ fun HomeScreen(viewModel: AccountViewModel) {
     val accounts = tokenManager.getAllAccounts().toList()
     var selectedAccount by remember { mutableStateOf(tokenManager.getActiveAccount()) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val errorMessage = viewModel.errorMessage
 
     val accountInfo = viewModel.accountInfo
-    val errorMessage = viewModel.errorMessage
     val isRefreshing = viewModel.isRefreshingState()
     val isLoading = viewModel.isLoadingState()
     var isInitialLoad by remember { mutableStateOf(true) }
 
+    // Обработка смены выбранного аккаунта
     LaunchedEffect(selectedAccount) {
         if (selectedAccount != null) {
-            TokenManager.getInstance(context).setActiveAccount(selectedAccount!!)
+            tokenManager.setActiveAccount(selectedAccount!!)
             if (isInitialLoad) {
                 viewModel.loadAccountInfo(BaseViewModel.State.LOADING)
                 isInitialLoad = false
@@ -78,16 +77,17 @@ fun HomeScreen(viewModel: AccountViewModel) {
                 viewModel.refreshAccountInfo()
             }
         } else {
-            val intent = Intent(context, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            context.startActivity(intent)
+            context.startActivity(Intent(context, LoginActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            })
         }
     }
 
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage)
-            Log.e("HomeScreen", "Error: $errorMessage")
+    LaunchedEffect(Unit) {
+        viewModel.errorFlow.collect { error ->
+            if (error.isNotBlank()) {
+                snackbarHostState.showSnackbar(error)
+            }
         }
     }
 
@@ -97,55 +97,31 @@ fun HomeScreen(viewModel: AccountViewModel) {
             PullRefresh(
                 refreshing = isRefreshing,
                 enabled = true,
-                onRefresh = {
-                    viewModel.pullToRefreshAccountInfo()
-                },
-                modifier = Modifier.fillMaxSize(),
+                onRefresh = { viewModel.pullToRefreshAccountInfo() },
+                modifier = Modifier.fillMaxSize()
             ) {
                 Surface(
                     color = MaterialTheme.colorScheme.surface,
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Box(
-                        modifier = Modifier
+                        Modifier
                             .fillMaxSize()
                             .padding(horizontal = 16.dp, vertical = 4.dp)
                     ) {
-                        if (isLoading) {
-                            CustomLoadingIndicator()
-                        } else {
-                            if (accountInfo != null) {
-                                LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxSize(),
-                                ) {
-                                    item {
-                                        AccountSelectCard(
-                                            info = accountInfo,
-                                            accounts = accounts,
-                                            selectedAccount = selectedAccount,
-                                            onAccountSelected = { account ->
-                                                selectedAccount = account
-                                            }
-                                        )
-                                    }
-                                    item {
-                                        AccountBalanceCard(
-                                            info = accountInfo,
-                                            showAddOpt = false
-                                        )
-                                    }
-                                    item {
-                                        TariffCard(accountInfo)
-                                    }
-                                }
-                            } else if (errorMessage != null) {
-                                ErrorDisplay(
-                                    refreshFunction = { viewModel.refreshAccountInfo() },
-                                    errorMessage = errorMessage,
-                                    modifier = Modifier.align(Alignment.Center),
-                                )
-                            }
+                        when {
+                            isLoading -> CustomLoadingIndicator()
+                            accountInfo != null -> AccountContent(
+                                accountInfo = accountInfo,
+                                accounts = accounts,
+                                selectedAccount = selectedAccount,
+                                onAccountSelected = { selectedAccount = it }
+                            )
+                            else -> ErrorDisplay(
+                                onRefreshClick = { viewModel.refreshAccountInfo() },
+                                errorMessage = errorMessage,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
                         }
                     }
                 }
@@ -153,6 +129,32 @@ fun HomeScreen(viewModel: AccountViewModel) {
         }
     )
 }
+
+@Composable
+private fun AccountContent(
+    accountInfo: AccountInfo,
+    accounts: List<String>,
+    selectedAccount: String?,
+    onAccountSelected: (String) -> Unit
+) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            AccountSelectCard(
+                info = accountInfo,
+                accounts = accounts,
+                selectedAccount = selectedAccount,
+                onAccountSelected = onAccountSelected
+            )
+        }
+        item {
+            AccountBalanceCard(info = accountInfo, showAddOpt = false)
+        }
+        item {
+            TariffCard(accountInfo)
+        }
+    }
+}
+
 
 @Composable
 fun TariffCard(info: AccountInfo) {

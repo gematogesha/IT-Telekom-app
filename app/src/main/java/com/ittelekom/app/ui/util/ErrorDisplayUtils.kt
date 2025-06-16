@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
+import androidx.compose.material.icons.outlined.SentimentDissatisfied
+import androidx.compose.material.icons.outlined.SettingsSuggest
 import androidx.compose.material.icons.rounded.SignalWifiConnectedNoInternet4
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -24,13 +26,59 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ErrorDisplay(
-    refreshFunction: () -> Unit,
     errorMessage: String?,
+    onRefreshClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     iconSize: Dp = 170.dp,
     textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyLarge,
     iconTint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.outlineVariant,
     defaultErrorMessage: String = "Ошибка загрузки данных"
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = getErrorIcon(errorMessage),
+                tint = iconTint,
+                contentDescription = "Error Icon",
+                modifier = Modifier.size(iconSize)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = errorMessage ?: defaultErrorMessage,
+                style = textStyle,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (onRefreshClick != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = onRefreshClick) {
+                    Text("Обновить")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun getErrorIcon(errorMessage: String?): ImageVector {
+    return when (errorMessage) {
+        "Нет подключения к интернету" -> Icons.Rounded.SignalWifiConnectedNoInternet4
+        "Нет доступных тарифов" -> Icons.Outlined.SentimentDissatisfied
+        else -> Icons.Outlined.CloudOff
+    }
+}
+
+@Composable
+fun DevDisplay(
+    modifier: Modifier = Modifier,
+    iconSize: Dp = 170.dp,
+    textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyLarge,
+    iconTint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.outlineVariant,
 ) {
     Box(
         modifier = Modifier
@@ -43,7 +91,7 @@ fun ErrorDisplay(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = getErrorIcon(errorMessage),
+                imageVector = Icons.Outlined.SettingsSuggest,
                 tint = iconTint,
                 contentDescription = "Error Icon",
                 modifier = Modifier
@@ -51,27 +99,11 @@ fun ErrorDisplay(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = errorMessage ?: defaultErrorMessage,
+                text = "В разработке",
                 style = textStyle,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    refreshFunction()
-                }
-            ) {
-                Text("Обновить")
-            }
         }
-    }
-}
-
-@Composable
-fun getErrorIcon(errorMessage: String?): ImageVector {
-    return when (errorMessage) {
-        "Нет подключения к интернету" -> Icons.Rounded.SignalWifiConnectedNoInternet4
-        else -> Icons.Outlined.CloudOff
     }
 }

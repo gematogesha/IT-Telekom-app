@@ -2,6 +2,7 @@ package com.ittelekom.app.viewmodels
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
@@ -11,79 +12,97 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.ittelekom.app.layouts.LoginActivity
+import com.ittelekom.app.models.MessageCarrier
 import com.ittelekom.app.utils.TokenManager
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import retrofit2.Response
 
-
 abstract class BaseViewModel(application: Application) : AndroidViewModel(application) {
-    // Текущее состояние
     var currentState by mutableStateOf(State.IDLE)
 
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
-    data class ErrorMessage(
-        val message: String?
-    )
+    private val _errorFlow = MutableSharedFlow<String>()
+    val errorFlow = _errorFlow.asSharedFlow()
 
-    protected fun fetchData(
-        state: State,
-        requests: List<suspend () -> Response<out Any>>,
-        onSuccess: (List<Any?>) -> Unit
-    ) {
-        if (!isInternetAvailable()) {
-            setError("Нет подключения к интернету")
-            currentState = State.IDLE
-            return
+    /**
+     * Универсальный метод для выполнения запроса с обработкой состояний и ошибок.
+     *
+     * @param request suspend-функция, выполняющая запрос и возвращающая Response<T>
+     * @param defaultError сообщение об ошибке по умолчанию, если запрос не удался
+     * @param showMessage флаг, указывающий нужно ли показывать сообщение от сервера (`message`)
+     * @param showError флаг, указывающий нужно ли показывать ошибку от сервера (`error`)
+     */
+
+    protected inline fun <reified T> handleResponse(
+        request: () -> Response<T>,
+        defaultError: String,
+        showMessage: Boolean = true,
+        showError: Boolean = true
+    ): T? where T : MessageCarrier {
+        val response = try {
+            request()
+        } catch (e: Exception) {
+            setError(defaultError)
+            Log.e("handleResponse", "Network call failed", e)
+            return null
         }
 
-        currentState = state
+        if (response.isSuccessful) {
+            return response.body()
+        }
 
-        viewModelScope.launch {
-            resetError()
-
+        val errorBodyString = response.errorBody()?.string()
+        if (!errorBodyString.isNullOrEmpty()) {
             try {
-                val responses = withContext(Dispatchers.IO) {
-                    requests.map { it() }
+                val errorObj = Gson().fromJson(errorBodyString, T::class.java)
+                val errorMessage = errorObj.message?.takeIf { it.isNotEmpty() }
+                val errorField = errorObj.error?.takeIf { it.isNotEmpty() }
+
+                val processedMessage = when (errorMessage) {
+                    "" -> ""
+                    else -> errorMessage
                 }
 
-                val allSuccessful = responses.all { it.isSuccessful }
+                val processedError = when (errorField) {
+                    "Нечего разблокировать!" -> "Ошибка загрузки данных"
+                    "Forbidden change tariff" -> "Нет доступных тарифов"
+                    "You not loggin or token incorrect." -> "Вы не вошли в систему"
+                    else -> errorField
+                }
 
-                if (allSuccessful) {
-                    onSuccess(responses.map { it.body() })
-                } else {
-                    val firstError = responses.firstOrNull { !it.isSuccessful }
-
-                    val errorMsg = firstError?.errorBody()?.string()?.let { errorJson ->
-                        try {
-                            Gson().fromJson(errorJson, ErrorMessage::class.java).message
-                        } catch (e: Exception) {
-                            null
-                        }
+                when {
+                    processedMessage != null -> {
+                        Log.w("handleResponse", "Server message: $processedMessage")
+                        if (showMessage) setError(processedMessage)
+                        return errorObj
                     }
-                    Log.e("BaseViewModel", "Ошибка загрузки: ${firstError?.code()} ${firstError?.message()}")
+                    processedError != null -> {
+                        Log.e("handleResponse", "Server error: $processedError")
+                        if (showError) setError(processedError)
+                        return errorObj
 
-                    setError(errorMsg ?: "Ошибка загрузки данных")
+                    }
                 }
-
             } catch (e: Exception) {
-                Log.e("BaseViewModel", "Исключение при загрузке данных", e)
-                setError("Ошибка загрузки данных")
-            } finally {
-                currentState = State.IDLE
+                setError(defaultError)
+                Log.e("handleResponse", "Error parsing error body", e)
             }
         }
+
+        setError(defaultError)
+        return null
     }
 
-    private fun isInternetAvailable(): Boolean {
-        val connectivityManager =
-            getApplication<Application>().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    fun isInternetAvailable(): Boolean {
+        val connectivityManager = getApplication<Application>()
+            .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork ?: return false
-        val networkCapabilities =
-            connectivityManager.getNetworkCapabilities(network) ?: return false
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
         return networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
@@ -96,6 +115,19 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
 
     fun setError(message: String) {
         errorMessage = message
+        emitError(message)
+    }
+
+    fun proceedToLogout(context: Context) {
+        val intent = Intent(context, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        context.startActivity(intent)
+    }
+
+    private fun emitError(message: String) {
+        viewModelScope.launch {
+            _errorFlow.emit(message)
+        }
     }
 
     fun resetError() {
@@ -109,8 +141,7 @@ abstract class BaseViewModel(application: Application) : AndroidViewModel(applic
         REFRESHING
     }
 
-    //fun isIdleState(): Boolean = currentState == State.IDLE
-    fun isLoadingState(): Boolean = currentState == State.LOADING
-    fun isLoadingItemState(): Boolean = currentState == State.LOADING_ITEM
-    fun isRefreshingState(): Boolean = currentState == State.REFRESHING
+    fun isLoadingState() = currentState == State.LOADING
+    fun isLoadingItemState() = currentState == State.LOADING_ITEM
+    fun isRefreshingState() = currentState == State.REFRESHING
 }
